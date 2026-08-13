@@ -25,7 +25,7 @@ export function WeekSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 bg-slate-100 dark:bg-slate-800/50 border-b border-border px-4 md:px-5 py-2.5 text-left hover:bg-slate-200/70 dark:hover:bg-slate-800/70 transition-colors duration-200"
+        className="w-full flex items-center gap-2 bg-gradient-to-b from-white to-slate-100 dark:from-slate-900 dark:to-slate-800/60 border-b border-border px-4 md:px-5 py-2.5 text-left hover:from-slate-50 hover:to-slate-200/70 dark:hover:from-slate-900 dark:hover:to-slate-800/80 transition-colors duration-200"
         aria-expanded={open}
       >
         {open ? <ChevronDown size={14} className="text-foreground/60" /> : <ChevronRight size={14} className="text-foreground/60" />}
