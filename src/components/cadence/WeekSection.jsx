@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, ArrowRightCircle } from 'lucide-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { FollowUpRow } from './FollowUpRow'
 import { AddRowInline } from './AddRowInline'
@@ -14,12 +14,11 @@ const COLS = [
 
 export function WeekSection({
   label, items, weekOptions,
-  onDelete, onEditField, onMoveWeek, onRollOpen, onAdd,
+  onDelete, onEditField, onMoveWeek, onAdd,
   defaultOpen = true,
 }) {
   const [open, setOpen] = useState(defaultOpen)
   const openCount = items.filter((i) => i.status !== 'done').length
-  const canRoll = onRollOpen && openCount > 0
 
   return (
     <Card className="overflow-hidden mb-6">
@@ -34,18 +33,6 @@ export function WeekSection({
         <span className="text-xs text-muted-foreground ml-1.5">
           {items.length} · <span className="text-foreground/70">{openCount} open</span>
         </span>
-        {canRoll && (
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => { e.stopPropagation(); onRollOpen(label) }}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onRollOpen(label) } }}
-            className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium text-foreground/70 hover:text-foreground rounded-md px-2 py-1 hover:bg-white/60 dark:hover:bg-white/10 transition-colors duration-200"
-            title="Move all open items to next week"
-          >
-            <ArrowRightCircle size={13} /> Roll open → next week
-          </span>
-        )}
       </button>
 
       {open && (

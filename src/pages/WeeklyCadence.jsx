@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { LoadingBlock } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error-state'
 import { WeekSection } from '@/components/cadence/WeekSection'
-import { weekLabelFromDate, nextLabelAfter, suggestedWeekOptions } from '@/lib/week'
+import { weekLabelFromDate, suggestedWeekOptions } from '@/lib/week'
 import { listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp } from '@/lib/api'
 
 const UNSCHEDULED = 'Unscheduled'
@@ -81,16 +81,6 @@ export default function WeeklyCadence() {
     setFollowUps((rs) => rs.map((r) => (r.id === id ? { ...r, weekLabel } : r)))
     await updateFollowUp(id, { week_label: weekLabel }).catch((e) => setError(e.message))
   }
-  const rollOpenToNext = async (fromLabel) => {
-    const target = nextLabelAfter(fromLabel) || weekLabelFromDate()
-    const moving = followUps.filter((f) => f.weekLabel === fromLabel && f.status !== 'done' && f.status !== 'stuck')
-    if (moving.length === 0) return
-    setFollowUps((rs) => rs.map((r) => (moving.find((m) => m.id === r.id) ? { ...r, weekLabel: target } : r)))
-    for (const m of moving) {
-      await updateFollowUp(m.id, { week_label: target }).catch((e) => setError(e.message))
-    }
-  }
-
   if (status === 'loading') {
     return (
       <>
@@ -132,7 +122,6 @@ export default function WeeklyCadence() {
             onEditField={editField}
             onMoveWeek={moveWeek}
             onAdd={addFollowUp}
-            onRollOpen={label === UNSCHEDULED ? null : rollOpenToNext}
           />
         ))
       )}
