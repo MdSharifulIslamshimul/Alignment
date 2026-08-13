@@ -1,0 +1,105 @@
+import { supabase, TABLE } from './supabase'
+
+const toDbMetric = (m) => ({
+  objective: m.objective ?? '',
+  initiative: m.initiative ?? '',
+  squad: m.squad ?? '',
+  metric: m.metric ?? '',
+  baseline: m.baseline ?? '',
+  target: m.target ?? '',
+  delivery: m.delivery || null,
+  follow_up: m.followUp || null,
+  achieved: m.achieved ?? 'On track',
+  owner: m.owner ?? '',
+})
+const fromDbMetric = (r) => ({
+  id: r.id,
+  objective: r.objective ?? '',
+  initiative: r.initiative ?? '',
+  squad: r.squad ?? '',
+  metric: r.metric ?? '',
+  baseline: r.baseline ?? '',
+  target: r.target ?? '',
+  delivery: r.delivery ?? '',
+  followUp: r.follow_up ?? '',
+  achieved: r.achieved ?? '',
+  owner: r.owner ?? '',
+})
+
+export async function listMetrics() {
+  const { data, error } = await supabase.from(TABLE.metrics).select('*').order('created_at', { ascending: false })
+  if (error) throw error
+  return (data || []).map(fromDbMetric)
+}
+export async function insertMetric(row) {
+  const { data, error } = await supabase.from(TABLE.metrics).insert(toDbMetric(row)).select().single()
+  if (error) throw error
+  return fromDbMetric(data)
+}
+export async function updateMetric(id, patch) {
+  const payload = toDbMetric(patch)
+  const { data, error } = await supabase.from(TABLE.metrics).update(payload).eq('id', id).select().single()
+  if (error) throw error
+  return fromDbMetric(data)
+}
+export async function deleteMetric(id) {
+  const { error } = await supabase.from(TABLE.metrics).delete().eq('id', id)
+  if (error) throw error
+}
+
+const toDbFollowUp = (f) => ({
+  item: f.item ?? '',
+  owner: f.owner ?? '',
+  due: f.due || null,
+  severity: f.severity ?? 'medium',
+  status: f.status ?? 'open',
+  context: f.context ?? '',
+})
+const fromDbFollowUp = (r) => ({
+  id: r.id,
+  item: r.item ?? '',
+  owner: r.owner ?? '',
+  due: r.due ?? '',
+  severity: r.severity ?? 'medium',
+  status: r.status ?? 'open',
+  context: r.context ?? '',
+})
+
+export async function listFollowUps() {
+  const { data, error } = await supabase.from(TABLE.followUps).select('*').order('created_at', { ascending: false })
+  if (error) throw error
+  return (data || []).map(fromDbFollowUp)
+}
+export async function insertFollowUp(row) {
+  const { data, error } = await supabase.from(TABLE.followUps).insert(toDbFollowUp(row)).select().single()
+  if (error) throw error
+  return fromDbFollowUp(data)
+}
+export async function updateFollowUp(id, patch) {
+  const { data, error } = await supabase.from(TABLE.followUps).update(patch).eq('id', id).select().single()
+  if (error) throw error
+  return fromDbFollowUp(data)
+}
+export async function deleteFollowUp(id) {
+  const { error } = await supabase.from(TABLE.followUps).delete().eq('id', id)
+  if (error) throw error
+}
+
+const fromDbBlocker = (r) => ({
+  id: r.id,
+  title: r.title ?? '',
+  impact: r.impact ?? '',
+  owner: r.owner ?? '',
+  severity: r.severity ?? 'medium',
+  since: r.since ?? '',
+})
+
+export async function listBlockers() {
+  const { data, error } = await supabase.from(TABLE.blockers).select('*').order('created_at', { ascending: false })
+  if (error) throw error
+  return (data || []).map(fromDbBlocker)
+}
+export async function deleteBlocker(id) {
+  const { error } = await supabase.from(TABLE.blockers).delete().eq('id', id)
+  if (error) throw error
+}

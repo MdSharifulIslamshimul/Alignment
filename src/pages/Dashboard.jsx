@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { LineChart, Compass, CalendarClock, TrendingUp, Target, Users, AlertTriangle } from 'lucide-react'
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -6,6 +7,7 @@ import { EntryCard } from '@/components/dashboard/EntryCard'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { trend } from '@/lib/mockData'
+import { listMetrics, listFollowUps, listBlockers } from '@/lib/api'
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
@@ -24,6 +26,17 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 export default function Dashboard() {
+  const [stats, setStats] = useState({ metrics: 0, onTrack: 0, followUps: 0, blockers: 0, blockersHigh: 0 })
+
+  useEffect(() => {
+    (async () => {
+      const [m, f, b] = await Promise.all([listMetrics(), listFollowUps(), listBlockers()]).catch(() => [[], [], []])
+      const onTrack = (m || []).filter((r) => r.achieved === 'On track' || r.achieved === 'Achieved').length
+      const blockersHigh = (b || []).filter((x) => x.severity === 'critical' || x.severity === 'high').length
+      setStats({ metrics: (m || []).length, onTrack, followUps: (f || []).filter((r) => r.status !== 'done').length, blockers: (b || []).length, blockersHigh })
+    })()
+  }, [])
+
   return (
     <>
       <PageHeader
@@ -33,17 +46,17 @@ export default function Dashboard() {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <SummaryCard label="Objectives on track" value="7 / 9" delta="+1 vs last week" tone="positive" icon={Target} />
+        <SummaryCard label="On track" value={`${stats.onTrack} / ${stats.metrics || '—'}`} delta="live from Supabase" tone="positive" icon={Target} />
         <SummaryCard label="Activation (W1)" value="45%" delta="+2.0 pts" tone="positive" icon={TrendingUp} />
-        <SummaryCard label="Open blockers" value="2" delta="1 high · 1 medium" tone="neutral" icon={AlertTriangle} />
-        <SummaryCard label="Active squads" value="12" delta="across 4 wings" tone="neutral" icon={Users} />
+        <SummaryCard label="Open blockers" value={stats.blockers} delta={stats.blockersHigh ? `${stats.blockersHigh} needs attention` : 'Under control'} tone={stats.blockersHigh ? 'neutral' : 'positive'} icon={AlertTriangle} />
+        <SummaryCard label="Open follow-ups" value={stats.followUps} delta="across all squads" tone="neutral" icon={Users} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-[18px]">Operating trend</CardTitle>
-            <CardDescription>Activation, retention, and ARPU — trailing 7 months</CardDescription>
+            <CardDescription>Activation and retention — trailing 7 months</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[260px]">
@@ -92,27 +105,9 @@ export default function Dashboard() {
 
       <h2 className="mt-10 mb-4 text-[18px] font-semibold tracking-tight">Jump in</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <EntryCard
-          to="/metrics"
-          title="Operating Metrics Review"
-          description="Objectives, initiatives, and success metrics across every wing."
-          icon={LineChart}
-          meta="12 initiatives · updated today"
-        />
-        <EntryCard
-          to="/discovery"
-          title="Discovery"
-          description="Whitespace, positioning, and product & competitive signals."
-          icon={Compass}
-          meta="4 competitor updates this week"
-        />
-        <EntryCard
-          to="/cadence"
-          title="Weekly Cadence"
-          description="Follow-ups and blockers, owned and dated."
-          icon={CalendarClock}
-          meta="4 follow-ups · 2 blockers"
-        />
+        <EntryCard to="/metrics" title="Operating Metrics Review" description="Objectives, initiatives, and success metrics across every wing." icon={LineChart} meta={`${stats.metrics} initiatives · live`} />
+        <EntryCard to="/discovery" title="Discovery" description="Whitespace, positioning, and product & competitive signals." icon={Compass} meta="4 competitor updates this week" />
+        <EntryCard to="/cadence" title="Weekly Cadence" description="Follow-ups and blockers, owned and dated." icon={CalendarClock} meta={`${stats.followUps} follow-ups · ${stats.blockers} blockers`} />
       </div>
     </>
   )
