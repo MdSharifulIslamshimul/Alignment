@@ -7,15 +7,12 @@ import { LoadingBlock } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error-state'
 import { AddFollowUpForm } from '@/components/cadence/AddFollowUpForm'
 import { WeekSection } from '@/components/cadence/WeekSection'
-import { ParkingLot } from '@/components/cadence/ParkingLot'
 import { weekLabelFromDate, nextLabelAfter, suggestedWeekOptions } from '@/lib/week'
-import {
-  listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp,
-  listBlockers, insertBlocker, deleteBlocker,
-} from '@/lib/api'
+import { listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp } from '@/lib/api'
 
 const NEXT_STATUS = { open: 'in_progress', in_progress: 'done', done: 'open' }
 const UNSCHEDULED = 'Unscheduled'
+const FIELD_TO_DB = { item: 'item', owner: 'owner', statusNote: 'status_note', kind: 'kind' }
 
 function groupByWeek(items) {
   const map = new Map()
@@ -23,6 +20,10 @@ function groupByWeek(items) {
     const key = f.weekLabel || UNSCHEDULED
     if (!map.has(key)) map.set(key, [])
     map.get(key).push(f)
+  }
+  // Blockers first within each week
+  for (const [, list] of map) {
+    list.sort((a, b) => (a.kind === 'blocker' ? -1 : 0) - (b.kind === 'blocker' ? -1 : 0))
   }
   return map
 }
@@ -40,7 +41,6 @@ function orderWeeks(keys, currentLabel) {
 
 export default function WeeklyCadence() {
   const [followUps, setFollowUps] = useState([])
-  const [blockers, setBlockers] = useState([])
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState(null)
   const currentWeek = weekLabelFromDate()
@@ -48,8 +48,8 @@ export default function WeeklyCadence() {
   const load = async () => {
     setStatus('loading'); setError(null)
     try {
-      const [f, b] = await Promise.all([listFollowUps(), listBlockers()])
-      setFollowUps(f); setBlockers(b); setStatus('ready')
+      const f = await listFollowUps()
+      setFollowUps(f); setStatus('ready')
     } catch (e) { setError(e.message); setStatus('error') }
   }
   useEffect(() => { load() }, [])
@@ -76,7 +76,6 @@ export default function WeeklyCadence() {
     setFollowUps((rs) => rs.filter((r) => r.id !== id))
     await deleteFollowUp(id).catch((e) => setError(e.message))
   }
-  const FIELD_TO_DB = { item: 'item', owner: 'owner', statusNote: 'status_note' }
   const editField = async (id, field, value) => {
     setFollowUps((rs) => rs.map((r) => (r.id === id ? { ...r, [field]: value } : r)))
     const dbKey = FIELD_TO_DB[field]
@@ -100,19 +99,11 @@ export default function WeeklyCadence() {
       await updateFollowUp(m.id, { week_label: target }).catch((e) => setError(e.message))
     }
   }
-  const resolveBlocker = async (id) => {
-    setBlockers((bs) => bs.filter((b) => b.id !== id))
-    await deleteBlocker(id).catch((e) => setError(e.message))
-  }
-  const addBlocker = async (b) => {
-    const created = await insertBlocker(b).catch((e) => { setError(e.message); return null })
-    if (created) setBlockers((bs) => [created, ...bs])
-  }
 
   if (status === 'loading') {
     return (
       <>
-        <PageHeader title="Weekly Alignment Huddle" description="Top priorities, owners, and status — grouped by week." />
+        <PageHeader title="Weekly Alignment Huddle" description="Priorities and blockers, grouped by week." />
         <Card><LoadingBlock label="Loading huddle…" /></Card>
       </>
     )
@@ -120,7 +111,7 @@ export default function WeeklyCadence() {
   if (status === 'error') {
     return (
       <>
-        <PageHeader title="Weekly Alignment Huddle" description="Top priorities, owners, and status — grouped by week." />
+        <PageHeader title="Weekly Alignment Huddle" description="Priorities and blockers, grouped by week." />
         <Card><ErrorState message={error} onRetry={load} /></Card>
       </>
     )
@@ -130,7 +121,7 @@ export default function WeeklyCadence() {
     <>
       <PageHeader
         title="Weekly Alignment Huddle"
-        description="Top priorities, owners, and status — grouped by week. Click a week to collapse."
+        description="Priorities and blockers per week. Toggle the tag on any row to switch between the two."
       />
 
       <div className="mb-4"><AddFollowUpForm onAdd={addFollowUp} defaultWeek={currentWeek} /></div>
@@ -139,8 +130,8 @@ export default function WeeklyCadence() {
         <Card className="mb-6">
           <EmptyState
             icon={CalendarClock}
-            title="No priorities yet"
-            description="Add the first priority for this week to kick off the huddle."
+            title="No items yet"
+            description="Add the first priority or blocker for this week to kick off the huddle."
           />
         </Card>
       ) : (
@@ -159,8 +150,6 @@ export default function WeeklyCadence() {
           />
         ))
       )}
-
-      <ParkingLot items={blockers} onAdd={addBlocker} onResolve={resolveBlocker} />
     </>
   )
 }

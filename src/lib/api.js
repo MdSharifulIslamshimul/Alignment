@@ -69,6 +69,7 @@ const toDbFollowUp = (f) => ({
   context: f.context ?? '',
   week_label: f.weekLabel ?? null,
   status_note: f.statusNote ?? '',
+  kind: f.kind ?? 'priority',
 })
 const fromDbFollowUp = (r) => ({
   id: r.id,
@@ -80,6 +81,7 @@ const fromDbFollowUp = (r) => ({
   context: r.context ?? '',
   weekLabel: r.week_label ?? '',
   statusNote: r.status_note ?? '',
+  kind: r.kind ?? 'priority',
 })
 
 export async function listFollowUps() {
