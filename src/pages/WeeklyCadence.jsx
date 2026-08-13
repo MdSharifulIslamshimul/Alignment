@@ -76,9 +76,12 @@ export default function WeeklyCadence() {
     setFollowUps((rs) => rs.filter((r) => r.id !== id))
     await deleteFollowUp(id).catch((e) => setError(e.message))
   }
-  const editNote = async (id, statusNote) => {
-    setFollowUps((rs) => rs.map((r) => (r.id === id ? { ...r, statusNote } : r)))
-    await updateFollowUp(id, { status_note: statusNote }).catch((e) => setError(e.message))
+  const FIELD_TO_DB = { item: 'item', owner: 'owner', statusNote: 'status_note' }
+  const editField = async (id, field, value) => {
+    setFollowUps((rs) => rs.map((r) => (r.id === id ? { ...r, [field]: value } : r)))
+    const dbKey = FIELD_TO_DB[field]
+    if (!dbKey) return
+    await updateFollowUp(id, { [dbKey]: value }).catch((e) => setError(e.message))
   }
   const addFollowUp = async (item) => {
     const created = await insertFollowUp(item).catch((e) => { setError(e.message); return null })
@@ -150,7 +153,7 @@ export default function WeeklyCadence() {
             defaultOpen={label === currentWeek || items.length > 0}
             onCycle={cycleStatus}
             onDelete={removeFollowUp}
-            onEditNote={editNote}
+            onEditField={editField}
             onMoveWeek={moveWeek}
             onRollOpen={label === UNSCHEDULED ? null : rollOpenToNext}
           />

@@ -1,12 +1,18 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, ArrowRightCircle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
-import { Table, THead, TBody, TR, TH } from '@/components/ui/table'
 import { FollowUpRow } from './FollowUpRow'
+
+const COL_CLASSES = [
+  'w-[48%]',    // Top Priorities
+  'w-[15%]',    // Owner
+  'w-[30%]',    // Status
+  'w-[7%]',     // Actions
+]
 
 export function WeekSection({
   label, items, weekOptions,
-  onCycle, onDelete, onEditNote, onMoveWeek, onRollOpen,
+  onCycle, onDelete, onEditField, onMoveWeek, onRollOpen,
   defaultOpen = true,
 }) {
   const [open, setOpen] = useState(defaultOpen)
@@ -41,33 +47,36 @@ export function WeekSection({
       </button>
 
       {open && (
-        items.length === 0 ? (
-          <div className="px-5 py-8 text-center text-sm text-muted-foreground">No priorities logged for this week yet.</div>
-        ) : (
-          <Table>
-            <THead>
-              <TR className="hover:bg-transparent">
-                <TH>Top Priorities / Follow Up</TH>
-                <TH>Owner</TH>
-                <TH>Status</TH>
-                <TH></TH>
-              </TR>
-            </THead>
-            <TBody>
-              {items.map((f) => (
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
+            <colgroup>
+              {COL_CLASSES.map((c, i) => <col key={i} className={c} />)}
+            </colgroup>
+            <thead className="bg-muted/40">
+              <tr>
+                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Top Priorities / Follow Up</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Owner</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="px-4 py-2.5"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.length === 0 ? (
+                <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-muted-foreground">No priorities logged for this week yet.</td></tr>
+              ) : items.map((f) => (
                 <FollowUpRow
                   key={f.id}
                   f={f}
                   weekOptions={weekOptions}
                   onCycle={onCycle}
                   onDelete={onDelete}
-                  onEditNote={onEditNote}
+                  onEditField={onEditField}
                   onMoveWeek={onMoveWeek}
                 />
               ))}
-            </TBody>
-          </Table>
-        )
+            </tbody>
+          </table>
+        </div>
       )}
     </Card>
   )
