@@ -1,8 +1,6 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, LineChart, Compass, CalendarClock, ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
+import { LayoutDashboard, LineChart, Compass, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/lib/AuthProvider'
-import { signOut } from '@/lib/auth'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -12,7 +10,6 @@ const NAV = [
 ]
 
 export function Sidebar({ collapsed, onToggle }) {
-  const { user } = useAuth()
   return (
     <aside
       className={cn(
@@ -54,30 +51,13 @@ export function Sidebar({ collapsed, onToggle }) {
         ))}
       </nav>
 
-      <div className="mx-2 mb-3 space-y-1">
-        {!collapsed && user?.email && (
-          <div className="px-3 py-1.5 text-[11px] text-muted-foreground truncate">{user.email}</div>
-        )}
-        <button
-          onClick={() => signOut()}
-          className={cn(
-            'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors duration-200',
-            collapsed && 'justify-center px-0'
-          )}
-          title={collapsed ? 'Sign out' : undefined}
-          aria-label="Sign out"
-        >
-          <LogOut size={18} className="shrink-0" />
-          {!collapsed && <span>Sign out</span>}
-        </button>
-        <button
-          onClick={onToggle}
-          className="w-full flex items-center justify-center h-9 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors duration-200"
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
-      </div>
+      <button
+        onClick={onToggle}
+        className="mx-2 mb-3 flex items-center justify-center h-9 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors duration-200"
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+      </button>
     </aside>
   )
 }
