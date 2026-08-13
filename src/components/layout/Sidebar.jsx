@@ -21,12 +21,12 @@ export function Sidebar({ collapsed, onToggle }) {
       <div className={cn('flex items-center h-14 px-4 border-b border-border', collapsed && 'justify-center px-0')}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-primary text-primary-foreground grid place-items-center text-[13px] font-bold">A</div>
-            <span className="text-[15px] font-semibold tracking-tight">Alignment</span>
+            <div className="h-7 w-7 rounded-lg bg-primary text-primary-foreground grid place-items-center text-[13px] font-bold">N</div>
+            <span className="text-[15px] font-semibold tracking-tight">Neeva</span>
           </div>
         )}
         {collapsed && (
-          <div className="h-7 w-7 rounded-lg bg-primary text-primary-foreground grid place-items-center text-[13px] font-bold">A</div>
+          <div className="h-7 w-7 rounded-lg bg-primary text-primary-foreground grid place-items-center text-[13px] font-bold">N</div>
         )}
       </div>
 
