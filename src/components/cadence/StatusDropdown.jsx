@@ -47,13 +47,12 @@ export function StatusDropdown({ status, onChange }) {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          'inline-flex items-center justify-between gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring w-[112px]',
           STYLE[value]
         )}
       >
-        <span className={cn('inline-block h-1.5 w-1.5 rounded-full', DOT[value])} />
         <span>{opt.label}</span>
-        <ChevronDown size={11} strokeWidth={2.5} className="opacity-70" />
+        <ChevronDown size={11} strokeWidth={2.5} className="opacity-70 shrink-0" />
       </button>
       {open && (
         <ul role="listbox" className="absolute left-0 top-7 z-40 min-w-[140px] bg-card border border-border rounded-lg shadow-lg py-1 animate-fade-in">
