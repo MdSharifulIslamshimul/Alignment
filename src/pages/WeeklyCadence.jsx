@@ -94,7 +94,7 @@ export default function WeeklyCadence() {
   if (status === 'loading') {
     return (
       <>
-        <PageHeader title="Weekly Alignment Huddle" description="Follow-ups and blockers, per week." />
+        <PageHeader title="Weekly Alignment Huddle" />
         <Card><LoadingBlock label="Loading huddle…" /></Card>
       </>
     )
@@ -102,7 +102,7 @@ export default function WeeklyCadence() {
   if (status === 'error') {
     return (
       <>
-        <PageHeader title="Weekly Alignment Huddle" description="Follow-ups and blockers, per week." />
+        <PageHeader title="Weekly Alignment Huddle" />
         <Card><ErrorState message={error} onRetry={load} /></Card>
       </>
     )
@@ -110,10 +110,7 @@ export default function WeeklyCadence() {
 
   return (
     <>
-      <PageHeader
-        title="Weekly Alignment Huddle"
-        description="Follow-ups and blockers per week. Blockers sort to the bottom of each week; toggle a row's tag to switch types."
-      />
+      <PageHeader title="Weekly Alignment Huddle" />
 
       {followUps.length === 0 ? (
         <Card className="mb-6">
