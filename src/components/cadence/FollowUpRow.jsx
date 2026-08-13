@@ -5,42 +5,18 @@ import { MoveMenu } from './MoveMenu'
 import { InlineText } from './InlineText'
 import { cn } from '@/lib/utils'
 
-function KindTag({ kind, onToggle }) {
-  const isBlocker = kind === 'blocker'
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      title="Toggle follow-up / blocker"
-      className={cn(
-        'shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors duration-200',
-        isBlocker
-          ? 'bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300'
-          : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
-      )}
-    >
-      {isBlocker ? 'Blocker' : 'Follow Up'}
-    </button>
-  )
-}
-
 export function FollowUpRow({ f, weekOptions, onDelete, onEditField, onMoveWeek }) {
-  const isBlocker = f.kind === 'blocker'
+  const isBlocker = f.status === 'blocker'
   return (
     <TR className={cn(isBlocker && 'bg-red-50/30 dark:bg-red-950/10')}>
       <TD className={cn('align-top py-2', isBlocker && 'border-l-2 border-l-red-400 dark:border-l-red-700')}>
-        <div className="flex items-start gap-2">
-          <div className="pt-1"><KindTag kind={f.kind} onToggle={() => onEditField(f.id, 'kind', isBlocker ? 'priority' : 'blocker')} /></div>
-          <div className="flex-1 min-w-0">
-            <InlineText
-              value={f.item}
-              onCommit={(v) => onEditField(f.id, 'item', v)}
-              placeholder={isBlocker ? 'What is blocked…' : 'Describe the priority…'}
-              textClassName="text-sm font-medium leading-snug"
-              multiline
-            />
-          </div>
-        </div>
+        <InlineText
+          value={f.item}
+          onCommit={(v) => onEditField(f.id, 'item', v)}
+          placeholder={isBlocker ? 'What is blocked…' : 'Describe the priority…'}
+          textClassName="text-sm font-medium leading-snug"
+          multiline
+        />
       </TD>
       <TD className="align-top py-2">
         <InlineText

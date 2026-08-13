@@ -6,6 +6,7 @@ const OPTIONS = [
   { value: 'not_started', label: 'Not started' },
   { value: 'in_progress', label: 'In progress' },
   { value: 'stuck',       label: 'Stuck' },
+  { value: 'blocker',     label: 'Blocker' },
   { value: 'done',        label: 'Done' },
 ]
 
@@ -13,6 +14,7 @@ const STYLE = {
   not_started: 'text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-300 dark:bg-slate-800',
   in_progress: 'text-blue-700 bg-blue-50 hover:bg-blue-100 dark:text-blue-300 dark:bg-blue-950/40',
   stuck:       'text-amber-700 bg-amber-50 hover:bg-amber-100 dark:text-amber-300 dark:bg-amber-950/40',
+  blocker:     'text-red-700 bg-red-50 hover:bg-red-100 dark:text-red-300 dark:bg-red-950/40',
   done:        'text-green-700 bg-green-50 hover:bg-green-100 dark:text-green-300 dark:bg-green-950/40',
 }
 

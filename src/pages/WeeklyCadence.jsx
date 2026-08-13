@@ -19,9 +19,9 @@ function groupByWeek(items) {
     if (!map.has(key)) map.set(key, [])
     map.get(key).push(f)
   }
-  // Follow-ups first, blockers last inside a week
+  // Follow-ups first, blockers last inside a week (blocker = status)
   for (const [, list] of map) {
-    list.sort((a, b) => (a.kind === 'blocker' ? 1 : 0) - (b.kind === 'blocker' ? 1 : 0))
+    list.sort((a, b) => (a.status === 'blocker' ? 1 : 0) - (b.status === 'blocker' ? 1 : 0))
   }
   return map
 }
