@@ -27,14 +27,12 @@ function groupByWeek(items) {
   return map
 }
 
-function orderWeeks(keys, currentLabel) {
+function orderWeeks(keys) {
   const parseWeek = (l) => { const m = l.match(/^W(\d+)/); return m ? parseInt(m[1], 10) : -1 }
   return keys.sort((a, b) => {
     if (a === UNSCHEDULED) return 1
     if (b === UNSCHEDULED) return -1
-    if (a === currentLabel) return -1
-    if (b === currentLabel) return 1
-    return parseWeek(a) - parseWeek(b)
+    return parseWeek(b) - parseWeek(a)
   })
 }
 
@@ -55,15 +53,16 @@ export default function WeeklyCadence() {
 
   const groups = useMemo(() => {
     const map = groupByWeek(followUps)
-    const ordered = orderWeeks([...map.keys()], currentWeek)
-    if (!ordered.includes(currentWeek)) ordered.unshift(currentWeek)
+    const keys = new Set(map.keys())
+    keys.add(currentWeek)
+    const ordered = orderWeeks([...keys])
     return ordered.map((label) => ({ label, items: map.get(label) || [] }))
   }, [followUps, currentWeek])
 
   const weekOptions = useMemo(() => {
     const set = new Set([...suggestedWeekOptions(), ...followUps.map((f) => f.weekLabel).filter(Boolean)])
-    return orderWeeks([...set], currentWeek)
-  }, [followUps, currentWeek])
+    return orderWeeks([...set])
+  }, [followUps])
 
   const cycleStatus = async (id) => {
     const cur = followUps.find((r) => r.id === id); if (!cur) return
