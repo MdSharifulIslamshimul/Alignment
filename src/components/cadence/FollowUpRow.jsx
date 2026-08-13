@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react'
 import { TR, TD } from '@/components/ui/table'
-import { StatusPill } from './StatusPill'
+import { StatusDropdown } from './StatusDropdown'
 import { MoveMenu } from './MoveMenu'
 import { InlineText } from './InlineText'
 import { cn } from '@/lib/utils'
@@ -24,7 +24,7 @@ function KindTag({ kind, onToggle }) {
   )
 }
 
-export function FollowUpRow({ f, weekOptions, onCycle, onDelete, onEditField, onMoveWeek }) {
+export function FollowUpRow({ f, weekOptions, onDelete, onEditField, onMoveWeek }) {
   const isBlocker = f.kind === 'blocker'
   return (
     <TR className={cn(isBlocker && 'bg-red-50/30 dark:bg-red-950/10')}>
@@ -52,7 +52,7 @@ export function FollowUpRow({ f, weekOptions, onCycle, onDelete, onEditField, on
         />
       </TD>
       <TD className="align-top py-3">
-        <StatusPill status={f.status} onCycle={() => onCycle(f.id)} />
+        <StatusDropdown status={f.status} onChange={(v) => onEditField(f.id, 'status', v)} />
       </TD>
       <TD className="align-top py-2">
         <InlineText

@@ -5,16 +5,16 @@ import { FollowUpRow } from './FollowUpRow'
 import { AddRowInline } from './AddRowInline'
 
 const COLS = [
-  { key: 'item',    label: 'Follow Up / Blocker',        width: '46%' },
-  { key: 'owner',   label: 'Owner',                       width: '13%' },
-  { key: 'status',  label: 'Status',                      width: '10%' },
-  { key: 'remarks', label: 'Remarks',                     width: '24%' },
-  { key: 'actions', label: '',                            width: '7%' },
+  { key: 'item',    label: 'Follow Up / Blocker', width: '50%' },
+  { key: 'owner',   label: 'Owner',               width: '10%' },
+  { key: 'status',  label: 'Status',              width: '11%' },
+  { key: 'remarks', label: 'Remarks',             width: '23%' },
+  { key: 'actions', label: '',                    width: '6%' },
 ]
 
 export function WeekSection({
   label, items, weekOptions,
-  onCycle, onDelete, onEditField, onMoveWeek, onRollOpen, onAdd,
+  onDelete, onEditField, onMoveWeek, onRollOpen, onAdd,
   defaultOpen = true,
 }) {
   const [open, setOpen] = useState(defaultOpen)
@@ -69,7 +69,6 @@ export function WeekSection({
                   key={f.id}
                   f={f}
                   weekOptions={weekOptions}
-                  onCycle={onCycle}
                   onDelete={onDelete}
                   onEditField={onEditField}
                   onMoveWeek={onMoveWeek}

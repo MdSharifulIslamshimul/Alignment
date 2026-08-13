@@ -18,7 +18,7 @@ export function AddRowInline({ weekLabel, onAdd }) {
   }
   const submit = () => {
     if (!item.trim()) return
-    onAdd({ item: item.trim(), owner: owner.trim(), kind, weekLabel, status: 'open', statusNote: '' })
+    onAdd({ item: item.trim(), owner: owner.trim(), kind, weekLabel, status: 'not_started', statusNote: '' })
     setItem(''); setOwner('')
     setTimeout(() => itemRef.current?.focus(), 0)
   }

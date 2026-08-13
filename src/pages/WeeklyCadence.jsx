@@ -9,9 +9,8 @@ import { WeekSection } from '@/components/cadence/WeekSection'
 import { weekLabelFromDate, nextLabelAfter, suggestedWeekOptions } from '@/lib/week'
 import { listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp } from '@/lib/api'
 
-const NEXT_STATUS = { open: 'in_progress', in_progress: 'done', done: 'open' }
 const UNSCHEDULED = 'Unscheduled'
-const FIELD_TO_DB = { item: 'item', owner: 'owner', statusNote: 'status_note', kind: 'kind' }
+const FIELD_TO_DB = { item: 'item', owner: 'owner', statusNote: 'status_note', kind: 'kind', status: 'status' }
 
 function groupByWeek(items) {
   const map = new Map()
@@ -64,12 +63,6 @@ export default function WeeklyCadence() {
     return orderWeeks([...set])
   }, [followUps])
 
-  const cycleStatus = async (id) => {
-    const cur = followUps.find((r) => r.id === id); if (!cur) return
-    const next = NEXT_STATUS[cur.status] || 'open'
-    setFollowUps((rs) => rs.map((r) => (r.id === id ? { ...r, status: next } : r)))
-    await updateFollowUp(id, { status: next }).catch((e) => setError(e.message))
-  }
   const removeFollowUp = async (id) => {
     setFollowUps((rs) => rs.filter((r) => r.id !== id))
     await deleteFollowUp(id).catch((e) => setError(e.message))
@@ -90,7 +83,7 @@ export default function WeeklyCadence() {
   }
   const rollOpenToNext = async (fromLabel) => {
     const target = nextLabelAfter(fromLabel) || weekLabelFromDate()
-    const moving = followUps.filter((f) => f.weekLabel === fromLabel && f.status !== 'done')
+    const moving = followUps.filter((f) => f.weekLabel === fromLabel && f.status !== 'done' && f.status !== 'stuck')
     if (moving.length === 0) return
     setFollowUps((rs) => rs.map((r) => (moving.find((m) => m.id === r.id) ? { ...r, weekLabel: target } : r)))
     for (const m of moving) {
@@ -138,7 +131,6 @@ export default function WeeklyCadence() {
             items={items}
             weekOptions={weekOptions}
             defaultOpen={label === currentWeek || items.length > 0}
-            onCycle={cycleStatus}
             onDelete={removeFollowUp}
             onEditField={editField}
             onMoveWeek={moveWeek}
