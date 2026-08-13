@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 export function AddRowInline({ weekLabel, onAdd }) {
@@ -11,7 +12,8 @@ export function AddRowInline({ weekLabel, onAdd }) {
   const itemRef = useRef(null)
 
   const start = () => {
-    setOpen(true); setKind('priority'); setItem(''); setOwner('')
+    setOpen(true)
+    setKind('priority'); setItem(''); setOwner('')
     setTimeout(() => itemRef.current?.focus(), 0)
   }
   const submit = () => {
@@ -27,19 +29,17 @@ export function AddRowInline({ weekLabel, onAdd }) {
       <button
         type="button"
         onClick={start}
-        className="w-full inline-flex items-center gap-2 px-4 py-3 text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-        aria-label={`Add an item to ${weekLabel}`}
+        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors duration-200"
       >
-        <Plus size={14} strokeWidth={2.2} />
-        <span>Add</span>
+        <Plus size={14} /> Add follow-up or blocker
       </button>
     )
   }
 
   return (
-    <div className="px-3 py-2.5 border-t border-border">
+    <div className="px-3 py-2 bg-muted/30 border-t border-border">
       <div className="flex items-center gap-2">
-        <div className="inline-flex rounded-full bg-muted p-0.5" role="tablist" aria-label="Item type">
+        <div className="inline-flex rounded-lg border border-input p-0.5 bg-card">
           {[
             { k: 'priority', label: 'Follow Up' },
             { k: 'blocker', label: 'Blocker' },
@@ -47,13 +47,11 @@ export function AddRowInline({ weekLabel, onAdd }) {
             <button
               key={o.k}
               type="button"
-              role="tab"
-              aria-selected={kind === o.k}
               onClick={() => setKind(o.k)}
               className={cn(
-                'px-3 h-7 text-[11px] font-medium rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'px-2.5 h-7 text-xs font-medium rounded-md transition-colors duration-200',
                 kind === o.k
-                  ? (o.k === 'blocker' ? 'bg-red-600/10 text-red-700 shadow-sm' : 'bg-card text-foreground shadow-sm')
+                  ? (o.k === 'blocker' ? 'bg-red-100 text-red-700' : 'bg-secondary text-foreground')
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -66,9 +64,8 @@ export function AddRowInline({ weekLabel, onAdd }) {
           value={item}
           onChange={(e) => setItem(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') cancel() }}
-          placeholder={kind === 'blocker' ? 'What is blocked' : 'New follow-up'}
+          placeholder={kind === 'blocker' ? 'What is blocked…' : 'Describe the follow-up…'}
           className="flex-1 h-8"
-          aria-label={kind === 'blocker' ? 'Describe blocker' : 'Describe follow-up'}
         />
         <Input
           value={owner}
@@ -76,15 +73,9 @@ export function AddRowInline({ weekLabel, onAdd }) {
           onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') cancel() }}
           placeholder="Owner"
           className="h-8 w-[140px]"
-          aria-label="Owner"
         />
-        <button
-          type="button"
-          onClick={cancel}
-          className="text-xs font-medium text-muted-foreground hover:text-foreground rounded-md px-2 h-8 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          Cancel
-        </button>
+        <Button size="sm" onClick={submit}>Add</Button>
+        <Button size="sm" variant="ghost" onClick={cancel}>Cancel</Button>
       </div>
     </div>
   )
