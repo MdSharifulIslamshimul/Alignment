@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { CalendarClock } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -7,8 +8,7 @@ import { ErrorState } from '@/components/ui/error-state'
 import { AddFollowUpForm } from '@/components/cadence/AddFollowUpForm'
 import { WeekSection } from '@/components/cadence/WeekSection'
 import { ParkingLot } from '@/components/cadence/ParkingLot'
-import { CalendarClock } from 'lucide-react'
-import { weekLabelFromDate } from '@/lib/week'
+import { weekLabelFromDate, nextLabelAfter, suggestedWeekOptions } from '@/lib/week'
 import {
   listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp,
   listBlockers, insertBlocker, deleteBlocker,
@@ -28,10 +28,7 @@ function groupByWeek(items) {
 }
 
 function orderWeeks(keys, currentLabel) {
-  const parseWeek = (label) => {
-    const m = label.match(/^W(\d+)/)
-    return m ? parseInt(m[1], 10) : -1
-  }
+  const parseWeek = (l) => { const m = l.match(/^W(\d+)/); return m ? parseInt(m[1], 10) : -1 }
   return keys.sort((a, b) => {
     if (a === UNSCHEDULED) return 1
     if (b === UNSCHEDULED) return -1
@@ -57,16 +54,20 @@ export default function WeeklyCadence() {
   }
   useEffect(() => { load() }, [])
 
-  const grouped = useMemo(() => {
+  const groups = useMemo(() => {
     const map = groupByWeek(followUps)
     const ordered = orderWeeks([...map.keys()], currentWeek)
     if (!ordered.includes(currentWeek)) ordered.unshift(currentWeek)
     return ordered.map((label) => ({ label, items: map.get(label) || [] }))
   }, [followUps, currentWeek])
 
+  const weekOptions = useMemo(() => {
+    const set = new Set([...suggestedWeekOptions(), ...followUps.map((f) => f.weekLabel).filter(Boolean)])
+    return orderWeeks([...set], currentWeek)
+  }, [followUps, currentWeek])
+
   const cycleStatus = async (id) => {
-    const cur = followUps.find((r) => r.id === id)
-    if (!cur) return
+    const cur = followUps.find((r) => r.id === id); if (!cur) return
     const next = NEXT_STATUS[cur.status] || 'open'
     setFollowUps((rs) => rs.map((r) => (r.id === id ? { ...r, status: next } : r)))
     await updateFollowUp(id, { status: next }).catch((e) => setError(e.message))
@@ -82,6 +83,19 @@ export default function WeeklyCadence() {
   const addFollowUp = async (item) => {
     const created = await insertFollowUp(item).catch((e) => { setError(e.message); return null })
     if (created) setFollowUps((rs) => [created, ...rs])
+  }
+  const moveWeek = async (id, weekLabel) => {
+    setFollowUps((rs) => rs.map((r) => (r.id === id ? { ...r, weekLabel } : r)))
+    await updateFollowUp(id, { week_label: weekLabel }).catch((e) => setError(e.message))
+  }
+  const rollOpenToNext = async (fromLabel) => {
+    const target = nextLabelAfter(fromLabel) || weekLabelFromDate()
+    const moving = followUps.filter((f) => f.weekLabel === fromLabel && f.status !== 'done')
+    if (moving.length === 0) return
+    setFollowUps((rs) => rs.map((r) => (moving.find((m) => m.id === r.id) ? { ...r, weekLabel: target } : r)))
+    for (const m of moving) {
+      await updateFollowUp(m.id, { week_label: target }).catch((e) => setError(e.message))
+    }
   }
   const resolveBlocker = async (id) => {
     setBlockers((bs) => bs.filter((b) => b.id !== id))
@@ -109,17 +123,16 @@ export default function WeeklyCadence() {
     )
   }
 
-  const allEmpty = followUps.length === 0
   return (
     <>
       <PageHeader
         title="Weekly Alignment Huddle"
-        description="Top priorities, owners, and status — grouped by week."
+        description="Top priorities, owners, and status — grouped by week. Click a week to collapse."
       />
 
       <div className="mb-4"><AddFollowUpForm onAdd={addFollowUp} defaultWeek={currentWeek} /></div>
 
-      {allEmpty ? (
+      {followUps.length === 0 ? (
         <Card className="mb-6">
           <EmptyState
             icon={CalendarClock}
@@ -128,14 +141,18 @@ export default function WeeklyCadence() {
           />
         </Card>
       ) : (
-        grouped.map(({ label, items }) => (
+        groups.map(({ label, items }) => (
           <WeekSection
             key={label}
             label={label}
             items={items}
+            weekOptions={weekOptions}
+            defaultOpen={label === currentWeek || items.length > 0}
             onCycle={cycleStatus}
             onDelete={removeFollowUp}
             onEditNote={editNote}
+            onMoveWeek={moveWeek}
+            onRollOpen={label === UNSCHEDULED ? null : rollOpenToNext}
           />
         ))
       )}

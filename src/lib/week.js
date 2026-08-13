@@ -39,3 +39,18 @@ export function suggestedWeekOptions(date = new Date()) {
   }
   return Array.from(new Set(opts))
 }
+
+export function mondayFromLabel(label, refYear = new Date().getFullYear()) {
+  if (!label) return null
+  const m = label.match(/([A-Za-z]{3,})\s+(\d{1,2})/)
+  if (!m) return null
+  const d = new Date(`${m[1]} ${m[2]} ${refYear}`)
+  return isNaN(d.getTime()) ? null : mondayOf(d)
+}
+
+export function nextLabelAfter(label) {
+  const monday = mondayFromLabel(label)
+  if (!monday) return null
+  const next = new Date(monday); next.setDate(next.getDate() + 7)
+  return weekLabelFromDate(next)
+}
