@@ -6,7 +6,11 @@ const anonKey =
   'sb_publishable_mT1frtkqIMYJ73DdEL9bBA_LRXv69Ab'
 
 export const supabase = createClient(url, anonKey, {
-  auth: { persistSession: false },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
 })
 
 export const TABLE = {
