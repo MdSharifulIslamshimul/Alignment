@@ -11,7 +11,7 @@ function KindTag({ kind, onToggle }) {
     <button
       type="button"
       onClick={onToggle}
-      title="Toggle priority / blocker"
+      title="Toggle follow-up / blocker"
       className={cn(
         'shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors duration-200',
         isBlocker
@@ -19,7 +19,7 @@ function KindTag({ kind, onToggle }) {
           : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
       )}
     >
-      {isBlocker ? 'Blocker' : 'Priority'}
+      {isBlocker ? 'Blocker' : 'Follow Up'}
     </button>
   )
 }
@@ -50,17 +50,15 @@ export function FollowUpRow({ f, weekOptions, onCycle, onDelete, onEditField, on
         />
       </TD>
       <TD className="align-middle py-2">
-        <div className="flex items-center gap-2">
-          <StatusPill status={f.status} onCycle={() => onCycle(f.id)} />
-          <div className="flex-1 min-w-0">
-            <InlineText
-              value={f.statusNote}
-              onCommit={(v) => onEditField(f.id, 'statusNote', v)}
-              placeholder={isBlocker ? 'Why it\'s blocking…' : 'Add a note…'}
-              textClassName="text-sm text-foreground/80"
-            />
-          </div>
-        </div>
+        <StatusPill status={f.status} onCycle={() => onCycle(f.id)} />
+      </TD>
+      <TD className="align-middle py-2">
+        <InlineText
+          value={f.statusNote}
+          onCommit={(v) => onEditField(f.id, 'statusNote', v)}
+          placeholder={isBlocker ? 'Why it\'s blocking…' : 'Add remarks…'}
+          textClassName="text-sm text-foreground/80"
+        />
       </TD>
       <TD className="align-middle py-2 text-right">
         <div className="flex items-center justify-end gap-0.5">

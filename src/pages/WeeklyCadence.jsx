@@ -5,8 +5,8 @@ import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { LoadingBlock } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error-state'
-import { AddFollowUpForm } from '@/components/cadence/AddFollowUpForm'
 import { WeekSection } from '@/components/cadence/WeekSection'
+import { ImportCadenceButton } from '@/components/cadence/ImportCadenceButton'
 import { weekLabelFromDate, nextLabelAfter, suggestedWeekOptions } from '@/lib/week'
 import { listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp } from '@/lib/api'
 
@@ -21,9 +21,9 @@ function groupByWeek(items) {
     if (!map.has(key)) map.set(key, [])
     map.get(key).push(f)
   }
-  // Blockers first within each week
+  // Follow-ups first, blockers last inside a week
   for (const [, list] of map) {
-    list.sort((a, b) => (a.kind === 'blocker' ? -1 : 0) - (b.kind === 'blocker' ? -1 : 0))
+    list.sort((a, b) => (a.kind === 'blocker' ? 1 : 0) - (b.kind === 'blocker' ? 1 : 0))
   }
   return map
 }
@@ -103,7 +103,7 @@ export default function WeeklyCadence() {
   if (status === 'loading') {
     return (
       <>
-        <PageHeader title="Weekly Alignment Huddle" description="Priorities and blockers, grouped by week." />
+        <PageHeader title="Weekly Alignment Huddle" description="Follow-ups and blockers, per week." />
         <Card><LoadingBlock label="Loading huddle…" /></Card>
       </>
     )
@@ -111,7 +111,7 @@ export default function WeeklyCadence() {
   if (status === 'error') {
     return (
       <>
-        <PageHeader title="Weekly Alignment Huddle" description="Priorities and blockers, grouped by week." />
+        <PageHeader title="Weekly Alignment Huddle" description="Follow-ups and blockers, per week." />
         <Card><ErrorState message={error} onRetry={load} /></Card>
       </>
     )
@@ -121,17 +121,20 @@ export default function WeeklyCadence() {
     <>
       <PageHeader
         title="Weekly Alignment Huddle"
-        description="Priorities and blockers per week. Toggle the tag on any row to switch between the two."
+        description="Follow-ups and blockers per week. Blockers sort to the bottom of each week; toggle a row's tag to switch types."
+        actions={
+          <ImportCadenceButton
+            onImported={(inserted) => setFollowUps((rs) => [...inserted, ...rs])}
+          />
+        }
       />
-
-      <div className="mb-4"><AddFollowUpForm onAdd={addFollowUp} defaultWeek={currentWeek} /></div>
 
       {followUps.length === 0 ? (
         <Card className="mb-6">
           <EmptyState
             icon={CalendarClock}
             title="No items yet"
-            description="Add the first priority or blocker for this week to kick off the huddle."
+            description="Add a follow-up or blocker with the + button inside a week, or bulk-upload an Excel."
           />
         </Card>
       ) : (
@@ -146,6 +149,7 @@ export default function WeeklyCadence() {
             onDelete={removeFollowUp}
             onEditField={editField}
             onMoveWeek={moveWeek}
+            onAdd={addFollowUp}
             onRollOpen={label === UNSCHEDULED ? null : rollOpenToNext}
           />
         ))

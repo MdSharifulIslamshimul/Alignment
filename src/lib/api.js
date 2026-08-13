@@ -103,6 +103,13 @@ export async function deleteFollowUp(id) {
   const { error } = await supabase.from(TABLE.followUps).delete().eq('id', id)
   if (error) throw error
 }
+export async function bulkInsertFollowUps(rows) {
+  if (!rows?.length) return []
+  const payload = rows.map(toDbFollowUp)
+  const { data, error } = await supabase.from(TABLE.followUps).insert(payload).select()
+  if (error) throw error
+  return (data || []).map(fromDbFollowUp)
+}
 
 const fromDbBlocker = (r) => ({
   id: r.id,

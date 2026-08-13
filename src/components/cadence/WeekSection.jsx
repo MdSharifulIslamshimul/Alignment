@@ -2,17 +2,19 @@ import { useState } from 'react'
 import { ChevronDown, ChevronRight, ArrowRightCircle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { FollowUpRow } from './FollowUpRow'
+import { AddRowInline } from './AddRowInline'
 
-const COL_CLASSES = [
-  'w-[48%]',    // Top Priorities
-  'w-[15%]',    // Owner
-  'w-[30%]',    // Status
-  'w-[7%]',     // Actions
+const COLS = [
+  { key: 'item',    label: 'Top Priorities / Follow Up', width: '46%' },
+  { key: 'owner',   label: 'Owner',                       width: '13%' },
+  { key: 'status',  label: 'Status',                      width: '10%' },
+  { key: 'remarks', label: 'Remarks',                     width: '24%' },
+  { key: 'actions', label: '',                            width: '7%' },
 ]
 
 export function WeekSection({
   label, items, weekOptions,
-  onCycle, onDelete, onEditField, onMoveWeek, onRollOpen,
+  onCycle, onDelete, onEditField, onMoveWeek, onRollOpen, onAdd,
   defaultOpen = true,
 }) {
   const [open, setOpen] = useState(defaultOpen)
@@ -50,19 +52,18 @@ export function WeekSection({
         <div className="w-full overflow-x-auto">
           <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
             <colgroup>
-              {COL_CLASSES.map((c, i) => <col key={i} className={c} />)}
+              {COLS.map((c) => <col key={c.key} style={{ width: c.width }} />)}
             </colgroup>
             <thead className="bg-muted/40">
               <tr>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Top Priorities / Follow Up</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Owner</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="px-4 py-2.5"></th>
+                {COLS.map((c) => (
+                  <th key={c.key} className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{c.label}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
-                <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-muted-foreground">No priorities logged for this week yet.</td></tr>
+                <tr><td colSpan={COLS.length} className="px-5 py-6 text-center text-sm text-muted-foreground">No items yet.</td></tr>
               ) : items.map((f) => (
                 <FollowUpRow
                   key={f.id}
@@ -76,6 +77,7 @@ export function WeekSection({
               ))}
             </tbody>
           </table>
+          <AddRowInline weekLabel={label} onAdd={onAdd} />
         </div>
       )}
     </Card>
