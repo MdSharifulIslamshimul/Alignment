@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarClock } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { LoadingBlock } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error-state'
 import { WeekSection } from '@/components/cadence/WeekSection'
-import { ImportCadenceButton } from '@/components/cadence/ImportCadenceButton'
+import { CalendarClock } from 'lucide-react'
 import { weekLabelFromDate, nextLabelAfter, suggestedWeekOptions } from '@/lib/week'
 import { listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp } from '@/lib/api'
 
@@ -21,7 +19,6 @@ function groupByWeek(items) {
     if (!map.has(key)) map.set(key, [])
     map.get(key).push(f)
   }
-  // Follow-ups first, blockers last inside a week
   for (const [, list] of map) {
     list.sort((a, b) => (a.kind === 'blocker' ? 1 : 0) - (b.kind === 'blocker' ? 1 : 0))
   }
@@ -47,10 +44,8 @@ export default function WeeklyCadence() {
 
   const load = async () => {
     setStatus('loading'); setError(null)
-    try {
-      const f = await listFollowUps()
-      setFollowUps(f); setStatus('ready')
-    } catch (e) { setError(e.message); setStatus('error') }
+    try { setFollowUps(await listFollowUps()); setStatus('ready') }
+    catch (e) { setError(e.message); setStatus('error') }
   }
   useEffect(() => { load() }, [])
 
@@ -78,8 +73,7 @@ export default function WeeklyCadence() {
   }
   const editField = async (id, field, value) => {
     setFollowUps((rs) => rs.map((r) => (r.id === id ? { ...r, [field]: value } : r)))
-    const dbKey = FIELD_TO_DB[field]
-    if (!dbKey) return
+    const dbKey = FIELD_TO_DB[field]; if (!dbKey) return
     await updateFollowUp(id, { [dbKey]: value }).catch((e) => setError(e.message))
   }
   const addFollowUp = async (item) => {
@@ -93,7 +87,7 @@ export default function WeeklyCadence() {
   const rollOpenToNext = async (fromLabel) => {
     const target = nextLabelAfter(fromLabel) || weekLabelFromDate()
     const moving = followUps.filter((f) => f.weekLabel === fromLabel && f.status !== 'done')
-    if (moving.length === 0) return
+    if (!moving.length) return
     setFollowUps((rs) => rs.map((r) => (moving.find((m) => m.id === r.id) ? { ...r, weekLabel: target } : r)))
     for (const m of moving) {
       await updateFollowUp(m.id, { week_label: target }).catch((e) => setError(e.message))
@@ -101,58 +95,36 @@ export default function WeeklyCadence() {
   }
 
   if (status === 'loading') {
-    return (
-      <>
-        <PageHeader title="Weekly Alignment Huddle" description="Follow-ups and blockers, per week." />
-        <Card><LoadingBlock label="Loading huddle…" /></Card>
-      </>
-    )
+    return (<><PageHeader title="Weekly Alignment Huddle" /><LoadingBlock label="Loading…" /></>)
   }
   if (status === 'error') {
-    return (
-      <>
-        <PageHeader title="Weekly Alignment Huddle" description="Follow-ups and blockers, per week." />
-        <Card><ErrorState message={error} onRetry={load} /></Card>
-      </>
-    )
+    return (<><PageHeader title="Weekly Alignment Huddle" /><ErrorState message={error} onRetry={load} /></>)
   }
 
   return (
     <>
-      <PageHeader
-        title="Weekly Alignment Huddle"
-        description="Follow-ups and blockers per week. Blockers sort to the bottom of each week; toggle a row's tag to switch types."
-        actions={
-          <ImportCadenceButton
-            onImported={(inserted) => setFollowUps((rs) => [...inserted, ...rs])}
-          />
-        }
-      />
+      <PageHeader title="Weekly Alignment Huddle" />
 
       {followUps.length === 0 ? (
-        <Card className="mb-6">
-          <EmptyState
-            icon={CalendarClock}
-            title="No items yet"
-            description="Add a follow-up or blocker with the + button inside a week, or bulk-upload an Excel."
-          />
-        </Card>
+        <EmptyState icon={CalendarClock} title="Nothing scheduled" description="Add your first follow-up under this week." />
       ) : (
-        groups.map(({ label, items }) => (
-          <WeekSection
-            key={label}
-            label={label}
-            items={items}
-            weekOptions={weekOptions}
-            defaultOpen={label === currentWeek || items.length > 0}
-            onCycle={cycleStatus}
-            onDelete={removeFollowUp}
-            onEditField={editField}
-            onMoveWeek={moveWeek}
-            onAdd={addFollowUp}
-            onRollOpen={label === UNSCHEDULED ? null : rollOpenToNext}
-          />
-        ))
+        <div>
+          {groups.map(({ label, items }) => (
+            <WeekSection
+              key={label}
+              label={label}
+              items={items}
+              weekOptions={weekOptions}
+              defaultOpen={label === currentWeek || items.length > 0}
+              onCycle={cycleStatus}
+              onDelete={removeFollowUp}
+              onEditField={editField}
+              onMoveWeek={moveWeek}
+              onAdd={addFollowUp}
+              onRollOpen={label === UNSCHEDULED ? null : rollOpenToNext}
+            />
+          ))}
+        </div>
       )}
     </>
   )

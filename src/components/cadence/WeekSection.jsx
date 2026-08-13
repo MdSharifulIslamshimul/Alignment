@@ -1,16 +1,21 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, ArrowRightCircle } from 'lucide-react'
-import { Card } from '@/components/ui/card'
+import { ChevronDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { FollowUpRow } from './FollowUpRow'
 import { AddRowInline } from './AddRowInline'
 
 const COLS = [
-  { key: 'item',    label: 'Top Priorities / Follow Up', width: '46%' },
-  { key: 'owner',   label: 'Owner',                       width: '13%' },
-  { key: 'status',  label: 'Status',                      width: '10%' },
-  { key: 'remarks', label: 'Remarks',                     width: '24%' },
-  { key: 'actions', label: '',                            width: '7%' },
+  { key: 'item',    width: '46%' },
+  { key: 'owner',   width: '13%' },
+  { key: 'status',  width: '10%' },
+  { key: 'remarks', width: '24%' },
+  { key: 'actions', width: '7%' },
 ]
+
+function parseLabel(label) {
+  const m = label.match(/^(W\d+)\s*[:.\-]?\s*(.+)$/)
+  return m ? { code: m[1], range: m[2] } : { code: '', range: label }
+}
 
 export function WeekSection({
   label, items, weekOptions,
@@ -20,50 +25,61 @@ export function WeekSection({
   const [open, setOpen] = useState(defaultOpen)
   const openCount = items.filter((i) => i.status !== 'done').length
   const canRoll = onRollOpen && openCount > 0
+  const { code, range } = parseLabel(label)
+  const bodyId = `week-body-${label.replace(/\W+/g, '-')}`
+  const titleId = `week-title-${label.replace(/\W+/g, '-')}`
 
   return (
-    <Card className="overflow-hidden mb-6">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 border-b border-border px-4 md:px-5 py-2.5 text-left hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 transition-colors duration-200"
-        aria-expanded={open}
-      >
-        {open ? <ChevronDown size={14} className="text-foreground/60" /> : <ChevronRight size={14} className="text-foreground/60" />}
-        <span className="text-sm font-semibold tracking-tight text-foreground">{label}</span>
-        <span className="text-xs text-muted-foreground ml-1.5">
-          {items.length} · <span className="text-foreground/70">{openCount} open</span>
-        </span>
-        {canRoll && (
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => { e.stopPropagation(); onRollOpen(label) }}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onRollOpen(label) } }}
-            className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium text-foreground/70 hover:text-foreground rounded-md px-2 py-1 hover:bg-white/60 dark:hover:bg-white/10 transition-colors duration-200"
-            title="Move all open items to next week"
+    <section aria-labelledby={titleId} className="border-t border-border">
+      <header className="flex items-baseline justify-between gap-4 py-5">
+        <div className="flex items-baseline gap-4 min-w-0">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls={bodyId}
+            className="group inline-flex items-baseline gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-left"
           >
-            <ArrowRightCircle size={13} /> Roll open → next week
+            <ChevronDown
+              size={16}
+              strokeWidth={2}
+              className={cn(
+                'text-muted-foreground group-hover:text-foreground transition-transform duration-200 relative top-0.5',
+                !open && '-rotate-90'
+              )}
+              aria-hidden="true"
+            />
+            <h2 id={titleId} className="text-[22px] font-semibold tracking-[-0.02em]">
+              {code && <span className="text-muted-foreground/70 mr-2 font-medium">{code}</span>}
+              <span>{range}</span>
+            </h2>
+          </button>
+          <span className="text-xs text-muted-foreground tabular-nums" aria-live="polite">
+            {items.length} · {openCount} open
           </span>
+        </div>
+        {canRoll && (
+          <button
+            type="button"
+            onClick={() => onRollOpen(label)}
+            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md px-1"
+          >
+            Roll open → next week
+          </button>
         )}
-      </button>
+      </header>
 
       {open && (
-        <div className="w-full overflow-x-auto">
+        <div id={bodyId}>
           <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
-            <colgroup>
-              {COLS.map((c) => <col key={c.key} style={{ width: c.width }} />)}
-            </colgroup>
-            <thead className="bg-muted/40">
-              <tr>
-                {COLS.map((c) => (
-                  <th key={c.key} className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{c.label}</th>
-                ))}
-              </tr>
-            </thead>
+            <colgroup>{COLS.map((c) => <col key={c.key} style={{ width: c.width }} />)}</colgroup>
             <tbody>
               {items.length === 0 ? (
-                <tr><td colSpan={COLS.length} className="px-5 py-6 text-center text-sm text-muted-foreground">No items yet.</td></tr>
+                <tr>
+                  <td colSpan={COLS.length} className="px-4 py-6 text-sm text-muted-foreground">
+                    Nothing yet.
+                  </td>
+                </tr>
               ) : items.map((f) => (
                 <FollowUpRow
                   key={f.id}
@@ -80,6 +96,6 @@ export function WeekSection({
           <AddRowInline weekLabel={label} onAdd={onAdd} />
         </div>
       )}
-    </Card>
+    </section>
   )
 }
