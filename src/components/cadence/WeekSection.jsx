@@ -5,7 +5,7 @@ import { FollowUpRow } from './FollowUpRow'
 import { AddRowInline } from './AddRowInline'
 
 const COLS = [
-  { key: 'item',    label: 'Top Priorities / Follow Up', width: '46%' },
+  { key: 'item',    label: 'Follow Up / Blocker',        width: '46%' },
   { key: 'owner',   label: 'Owner',                       width: '13%' },
   { key: 'status',  label: 'Status',                      width: '10%' },
   { key: 'remarks', label: 'Remarks',                     width: '24%' },
