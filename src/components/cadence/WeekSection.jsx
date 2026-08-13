@@ -5,11 +5,11 @@ import { FollowUpRow } from './FollowUpRow'
 import { AddRowInline } from './AddRowInline'
 
 const COLS = [
-  { key: 'item',    label: 'Follow Up / Blocker', width: '50%' },
+  { key: 'item',    label: 'Follow Up / Blocker', width: '40%' },
   { key: 'owner',   label: 'Owner',               width: '10%' },
-  { key: 'status',  label: 'Status',              width: '11%' },
-  { key: 'remarks', label: 'Remarks',             width: '23%' },
-  { key: 'actions', label: '',                    width: '6%' },
+  { key: 'status',  label: 'Status',              width: '10%' },
+  { key: 'remarks', label: 'Remarks',             width: '35%' },
+  { key: 'actions', label: '',                    width: '5%' },
 ]
 
 export function WeekSection({

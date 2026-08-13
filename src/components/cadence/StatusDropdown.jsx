@@ -47,7 +47,7 @@ export function StatusDropdown({ status, onChange }) {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           STYLE[value]
         )}
       >
