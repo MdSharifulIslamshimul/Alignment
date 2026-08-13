@@ -25,12 +25,12 @@ export function WeekSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 bg-gradient-to-b from-white to-slate-100 dark:from-slate-900 dark:to-slate-800/60 border-b border-border px-4 md:px-5 py-2.5 text-left hover:from-slate-50 hover:to-slate-200/70 dark:hover:from-slate-900 dark:hover:to-slate-800/80 transition-colors duration-200"
+        className="w-full flex items-center gap-2.5 bg-slate-100 dark:bg-slate-800/50 border-b border-border px-4 md:px-5 py-3 text-left hover:bg-slate-200/70 dark:hover:bg-slate-800/70 transition-colors duration-200"
         aria-expanded={open}
       >
-        {open ? <ChevronDown size={14} className="text-foreground/60" /> : <ChevronRight size={14} className="text-foreground/60" />}
-        <span className="text-sm font-semibold tracking-tight text-foreground">{label}</span>
-        <span className="text-xs text-muted-foreground ml-1.5">
+        {open ? <ChevronDown size={15} className="text-foreground/60" /> : <ChevronRight size={15} className="text-foreground/60" />}
+        <span className="text-[15px] font-medium tracking-tight text-foreground">{label}</span>
+        <span className="text-xs text-muted-foreground ml-1">
           {items.length} · <span className="text-foreground/70">{openCount} open</span>
         </span>
       </button>
