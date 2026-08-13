@@ -47,6 +47,19 @@ export async function deleteMetric(id) {
   if (error) throw error
 }
 
+export async function bulkInsertMetrics(rows) {
+  if (!rows?.length) return []
+  const payload = rows.map(toDbMetric)
+  const { data, error } = await supabase.from(TABLE.metrics).insert(payload).select()
+  if (error) throw error
+  return (data || []).map(fromDbMetric)
+}
+
+export async function deleteAllMetrics() {
+  const { error } = await supabase.from(TABLE.metrics).delete().neq('id', '00000000-0000-0000-0000-000000000000')
+  if (error) throw error
+}
+
 const toDbFollowUp = (f) => ({
   item: f.item ?? '',
   owner: f.owner ?? '',

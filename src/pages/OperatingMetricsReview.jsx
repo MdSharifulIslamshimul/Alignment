@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { LoadingBlock } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error-state'
 import { MetricRow } from '@/components/metrics/MetricRow'
+import { ImportButton } from '@/components/metrics/ImportButton'
 import { listMetrics, insertMetric, updateMetric, deleteMetric } from '@/lib/api'
 
 const COLS = [
@@ -63,6 +64,12 @@ export default function OperatingMetricsReview() {
         description="Objectives, initiatives, and success metrics — synced live with Supabase."
         actions={
           <>
+            <ImportButton
+              existingCount={rows.length}
+              onImported={(inserted, mode) => {
+                setRows((rs) => (mode === 'replace' ? inserted : [...inserted, ...rs]))
+              }}
+            />
             <Button variant="secondary" size="sm"><Download size={14} /> Export</Button>
             <Button size="sm" onClick={addRow}><Plus size={14} /> Add row</Button>
           </>
