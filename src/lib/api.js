@@ -67,6 +67,8 @@ const toDbFollowUp = (f) => ({
   severity: f.severity ?? 'medium',
   status: f.status ?? 'open',
   context: f.context ?? '',
+  week_label: f.weekLabel ?? null,
+  status_note: f.statusNote ?? '',
 })
 const fromDbFollowUp = (r) => ({
   id: r.id,
@@ -76,6 +78,8 @@ const fromDbFollowUp = (r) => ({
   severity: r.severity ?? 'medium',
   status: r.status ?? 'open',
   context: r.context ?? '',
+  weekLabel: r.week_label ?? '',
+  statusNote: r.status_note ?? '',
 })
 
 export async function listFollowUps() {
@@ -106,11 +110,23 @@ const fromDbBlocker = (r) => ({
   severity: r.severity ?? 'medium',
   since: r.since ?? '',
 })
+const toDbBlocker = (b) => ({
+  title: b.title ?? '',
+  impact: b.impact ?? '',
+  owner: b.owner ?? '',
+  severity: b.severity ?? 'medium',
+  since: b.since || null,
+})
 
 export async function listBlockers() {
   const { data, error } = await supabase.from(TABLE.blockers).select('*').order('created_at', { ascending: false })
   if (error) throw error
   return (data || []).map(fromDbBlocker)
+}
+export async function insertBlocker(row) {
+  const { data, error } = await supabase.from(TABLE.blockers).insert(toDbBlocker(row)).select().single()
+  if (error) throw error
+  return fromDbBlocker(data)
 }
 export async function deleteBlocker(id) {
   const { error } = await supabase.from(TABLE.blockers).delete().eq('id', id)

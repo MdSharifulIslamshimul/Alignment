@@ -1,27 +1,52 @@
-import { useEffect, useState } from 'react'
-import { AlertTriangle, CheckCircle2, ListChecks } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Table, THead, TBody, TR, TH } from '@/components/ui/table'
+import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { LoadingBlock } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error-state'
 import { AddFollowUpForm } from '@/components/cadence/AddFollowUpForm'
-import { FollowUpRow } from '@/components/cadence/FollowUpRow'
-import { BlockerCard } from '@/components/cadence/BlockerCard'
-import { SummaryCard } from '@/components/dashboard/SummaryCard'
+import { WeekSection } from '@/components/cadence/WeekSection'
+import { ParkingLot } from '@/components/cadence/ParkingLot'
+import { CalendarClock } from 'lucide-react'
+import { weekLabelFromDate } from '@/lib/week'
 import {
   listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp,
-  listBlockers, deleteBlocker,
+  listBlockers, insertBlocker, deleteBlocker,
 } from '@/lib/api'
 
-const NEXT = { open: 'in_progress', in_progress: 'done', done: 'open' }
+const NEXT_STATUS = { open: 'in_progress', in_progress: 'done', done: 'open' }
+const UNSCHEDULED = 'Unscheduled'
+
+function groupByWeek(items) {
+  const map = new Map()
+  for (const f of items) {
+    const key = f.weekLabel || UNSCHEDULED
+    if (!map.has(key)) map.set(key, [])
+    map.get(key).push(f)
+  }
+  return map
+}
+
+function orderWeeks(keys, currentLabel) {
+  const parseWeek = (label) => {
+    const m = label.match(/^W(\d+)/)
+    return m ? parseInt(m[1], 10) : -1
+  }
+  return keys.sort((a, b) => {
+    if (a === UNSCHEDULED) return 1
+    if (b === UNSCHEDULED) return -1
+    if (a === currentLabel) return -1
+    if (b === currentLabel) return 1
+    return parseWeek(a) - parseWeek(b)
+  })
+}
 
 export default function WeeklyCadence() {
   const [followUps, setFollowUps] = useState([])
   const [blockers, setBlockers] = useState([])
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState(null)
+  const currentWeek = weekLabelFromDate()
 
   const load = async () => {
     setStatus('loading'); setError(null)
@@ -32,16 +57,27 @@ export default function WeeklyCadence() {
   }
   useEffect(() => { load() }, [])
 
+  const grouped = useMemo(() => {
+    const map = groupByWeek(followUps)
+    const ordered = orderWeeks([...map.keys()], currentWeek)
+    if (!ordered.includes(currentWeek)) ordered.unshift(currentWeek)
+    return ordered.map((label) => ({ label, items: map.get(label) || [] }))
+  }, [followUps, currentWeek])
+
   const cycleStatus = async (id) => {
     const cur = followUps.find((r) => r.id === id)
     if (!cur) return
-    const next = NEXT[cur.status] || 'open'
+    const next = NEXT_STATUS[cur.status] || 'open'
     setFollowUps((rs) => rs.map((r) => (r.id === id ? { ...r, status: next } : r)))
     await updateFollowUp(id, { status: next }).catch((e) => setError(e.message))
   }
   const removeFollowUp = async (id) => {
     setFollowUps((rs) => rs.filter((r) => r.id !== id))
     await deleteFollowUp(id).catch((e) => setError(e.message))
+  }
+  const editNote = async (id, statusNote) => {
+    setFollowUps((rs) => rs.map((r) => (r.id === id ? { ...r, statusNote } : r)))
+    await updateFollowUp(id, { status_note: statusNote }).catch((e) => setError(e.message))
   }
   const addFollowUp = async (item) => {
     const created = await insertFollowUp(item).catch((e) => { setError(e.message); return null })
@@ -51,81 +87,60 @@ export default function WeeklyCadence() {
     setBlockers((bs) => bs.filter((b) => b.id !== id))
     await deleteBlocker(id).catch((e) => setError(e.message))
   }
-
-  const open = followUps.filter((f) => f.status !== 'done').length
-  const done = followUps.length - open
+  const addBlocker = async (b) => {
+    const created = await insertBlocker(b).catch((e) => { setError(e.message); return null })
+    if (created) setBlockers((bs) => [created, ...bs])
+  }
 
   if (status === 'loading') {
     return (
       <>
-        <PageHeader title="Weekly Cadence" description="Follow-ups and blockers, owned and dated." />
-        <Card><LoadingBlock label="Loading cadence…" /></Card>
+        <PageHeader title="Weekly Alignment Huddle" description="Top priorities, owners, and status — grouped by week." />
+        <Card><LoadingBlock label="Loading huddle…" /></Card>
       </>
     )
   }
   if (status === 'error') {
     return (
       <>
-        <PageHeader title="Weekly Cadence" description="Follow-ups and blockers, owned and dated." />
+        <PageHeader title="Weekly Alignment Huddle" description="Top priorities, owners, and status — grouped by week." />
         <Card><ErrorState message={error} onRetry={load} /></Card>
       </>
     )
   }
 
+  const allEmpty = followUps.length === 0
   return (
     <>
-      <PageHeader title="Weekly Cadence" description="Follow-ups and blockers, owned and dated." />
+      <PageHeader
+        title="Weekly Alignment Huddle"
+        description="Top priorities, owners, and status — grouped by week."
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <SummaryCard label="Open follow-ups" value={open} delta={`${done} closed`} icon={ListChecks} tone="neutral" />
-        <SummaryCard
-          label="Blockers"
-          value={blockers.length}
-          delta={blockers.some((b) => b.severity === 'critical' || b.severity === 'high') ? 'Attention needed' : 'Under control'}
-          icon={AlertTriangle}
-          tone={blockers.length ? 'neutral' : 'positive'}
-        />
-        <SummaryCard label="Closed" value={done} delta="synced live" icon={CheckCircle2} tone="positive" />
-      </div>
+      <div className="mb-4"><AddFollowUpForm onAdd={addFollowUp} defaultWeek={currentWeek} /></div>
 
-      <div className="mb-4"><AddFollowUpForm onAdd={addFollowUp} /></div>
-
-      <Card className="overflow-hidden mb-8">
-        <CardHeader>
-          <CardTitle>Follow-ups</CardTitle>
-          <CardDescription>Click a status to advance it. Delete when no longer relevant.</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {followUps.length === 0 ? (
-            <EmptyState icon={ListChecks} title="Nothing to follow up on" description="Add a follow-up when a decision, sign-off, or check-in is pending." />
-          ) : (
-            <Table>
-              <THead>
-                <TR className="hover:bg-transparent">
-                  <TH>Item</TH><TH>Owner</TH><TH>Due</TH><TH>Severity</TH><TH>Status</TH><TH></TH>
-                </TR>
-              </THead>
-              <TBody>
-                {followUps.map((f) => (
-                  <FollowUpRow key={f.id} f={f} onCycle={cycleStatus} onDelete={removeFollowUp} />
-                ))}
-              </TBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[18px] font-semibold tracking-tight">Active blockers</h2>
-        <div className="text-xs text-muted-foreground">{blockers.length} active</div>
-      </div>
-      {blockers.length === 0 ? (
-        <Card><EmptyState icon={CheckCircle2} title="No active blockers" description="Squads are unblocked." /></Card>
+      {allEmpty ? (
+        <Card className="mb-6">
+          <EmptyState
+            icon={CalendarClock}
+            title="No priorities yet"
+            description="Add the first priority for this week to kick off the huddle."
+          />
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {blockers.map((b) => <BlockerCard key={b.id} b={b} onResolve={resolveBlocker} />)}
-        </div>
+        grouped.map(({ label, items }) => (
+          <WeekSection
+            key={label}
+            label={label}
+            items={items}
+            onCycle={cycleStatus}
+            onDelete={removeFollowUp}
+            onEditNote={editNote}
+          />
+        ))
       )}
+
+      <ParkingLot items={blockers} onAdd={addBlocker} onResolve={resolveBlocker} />
     </>
   )
 }
