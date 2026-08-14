@@ -38,7 +38,7 @@ export default function Login() {
         </div>
 
         <h1 className="mt-6 text-[24px] font-bold tracking-[-0.02em] leading-none">Neeva</h1>
-        <p className="mt-2 text-[15px] text-foreground/80 leading-tight">Business Command Center</p>
+        <p className="mt-2 text-[15px] text-foreground/80 leading-tight">Project Alignment Tracker</p>
         <p className="mt-1 text-xs text-muted-foreground">Authorized accounts only</p>
 
         {status === 'denied' ? (
