@@ -4,22 +4,23 @@ import { cn } from '@/lib/utils'
 import { UserMenu } from './UserMenu'
 
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, shortcut: '1' },
-  { to: '/metrics', label: 'Operating Metrics', icon: LineChart, shortcut: '2' },
-  { to: '/discovery', label: 'Discovery', icon: Compass, shortcut: '3' },
-  { to: '/cadence', label: 'Weekly Cadence', icon: CalendarClock, shortcut: '4' },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/metrics', label: 'Operating Metrics', icon: LineChart },
+  { to: '/discovery', label: 'Discovery', icon: Compass },
+  { to: '/cadence', label: 'Weekly Cadence', icon: CalendarClock },
 ]
 
-function NavItem({ to, label, icon: Icon, end, shortcut, collapsed }) {
+function NavItem({ to, label, icon: Icon, end, collapsed }) {
   return (
     <NavLink
       to={to}
       end={end}
-      title={collapsed ? label : undefined}
       className={({ isActive }) =>
         cn(
-          'group relative flex items-center gap-2.5 rounded-lg h-9 px-2.5 text-[13px] font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-          collapsed && 'justify-center px-0',
+          'group relative flex items-center rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          collapsed
+            ? 'h-10 w-10 mx-auto justify-center'
+            : 'h-9 px-2.5 gap-2.5 text-[13px] font-medium',
           isActive
             ? 'bg-card text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
             : 'text-muted-foreground hover:text-foreground hover:bg-card/70'
@@ -32,27 +33,18 @@ function NavItem({ to, label, icon: Icon, end, shortcut, collapsed }) {
             <span aria-hidden="true" className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-foreground" />
           )}
           <Icon
-            size={16}
+            size={collapsed ? 18 : 16}
             strokeWidth={isActive ? 2.25 : 1.9}
             className={cn('shrink-0 transition-colors', isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground')}
           />
-          {!collapsed && (
-            <>
-              <span className="flex-1 truncate">{label}</span>
-              {shortcut && (
-                <kbd
-                  aria-hidden="true"
-                  className={cn(
-                    'hidden lg:inline-flex items-center justify-center h-4 min-w-4 px-1 rounded text-[10px] font-medium tabular-nums border transition-colors duration-200',
-                    isActive
-                      ? 'text-muted-foreground border-border/70 bg-muted/40'
-                      : 'text-muted-foreground/60 border-transparent group-hover:border-border/60 group-hover:bg-muted/40'
-                  )}
-                >
-                  {shortcut}
-                </kbd>
-              )}
-            </>
+          {!collapsed && <span className="flex-1 truncate">{label}</span>}
+          {collapsed && (
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute left-[calc(100%+10px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-foreground text-background text-[11px] font-medium px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-md z-40"
+            >
+              {label}
+            </span>
           )}
         </>
       )}
@@ -83,24 +75,25 @@ export function Sidebar({ collapsed, onToggle }) {
 
       <div className="mx-3 h-px bg-border/60" />
 
-      <nav className="flex-1 px-2 py-3 space-y-0.5">
+      <nav className={cn('flex-1 py-3', collapsed ? 'px-2 space-y-1' : 'px-2 space-y-0.5')}>
         {NAV.map((n) => <NavItem key={n.to} {...n} collapsed={collapsed} />)}
       </nav>
 
       <div className="mx-3 h-px bg-border/60" />
 
-      <div className="p-2 space-y-1">
+      <div className={cn('p-2', collapsed ? 'space-y-1.5' : 'space-y-1')}>
         <UserMenu collapsed={collapsed} />
         <button
           onClick={onToggle}
           className={cn(
-            'w-full flex items-center gap-2.5 rounded-lg h-8 px-2.5 text-[12px] text-muted-foreground hover:text-foreground hover:bg-card/70 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            collapsed && 'justify-center px-0'
+            'w-full flex items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-card/70 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            collapsed ? 'h-8 justify-center' : 'h-8 px-2.5 gap-2.5 text-[12px]'
           )}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : undefined}
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-          {!collapsed && <span className="text-[12px]">Collapse</span>}
+          {!collapsed && <span>Collapse</span>}
         </button>
       </div>
     </aside>

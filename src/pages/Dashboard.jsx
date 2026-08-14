@@ -1,5 +1,5 @@
-import { Navigate } from 'react-router-dom'
+import WeeklyCadence from './WeeklyCadence'
 
 export default function Dashboard() {
-  return <Navigate to="/cadence" replace />
+  return <WeeklyCadence />
 }
