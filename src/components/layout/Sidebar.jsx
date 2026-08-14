@@ -56,7 +56,7 @@ export function Sidebar({ collapsed, onToggle }) {
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col bg-[#fbfbfd] border-r border-border h-screen sticky top-0 transition-all',
+        'hidden md:flex flex-col bg-white border-r border-border h-screen sticky top-0 transition-all',
         collapsed ? 'w-[64px]' : 'w-[240px]'
       )}
       style={{ transitionDuration: '300ms', transitionTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' }}

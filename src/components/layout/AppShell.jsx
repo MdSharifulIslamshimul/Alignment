@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { MobileTabBar } from './MobileTabBar'
+import { Toaster } from '@/components/ui/toaster'
 
 export function AppShell({ children }) {
   const [collapsed, setCollapsed] = useState(false)
@@ -23,6 +24,7 @@ export function AppShell({ children }) {
         </motion.div>
       </main>
       <MobileTabBar />
+      <Toaster />
     </div>
   )
 }

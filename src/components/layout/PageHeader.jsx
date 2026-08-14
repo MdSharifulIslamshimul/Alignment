@@ -8,9 +8,9 @@ export function PageHeader({ title, description, actions, className }) {
         className
       )}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[28px] md:text-[32px] font-bold tracking-[-0.02em] leading-tight">{title}</h1>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="min-w-0">
+          <h1 className="text-[24px] md:text-[28px] font-bold tracking-[-0.02em] leading-tight">{title}</h1>
           {description && <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{description}</p>}
         </div>
         {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}

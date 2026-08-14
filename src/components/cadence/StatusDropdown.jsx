@@ -41,9 +41,10 @@ export function StatusDropdown({ status, onChange }) {
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-label={`Status: ${opt.label}`}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'inline-flex items-center justify-between gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring w-[112px]',
+          'inline-flex items-center justify-between gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-[180ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring w-[112px]',
           STYLE[value]
         )}
       >

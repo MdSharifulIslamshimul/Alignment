@@ -2,19 +2,34 @@ import { Trash2 } from 'lucide-react'
 import { TR, TD } from '@/components/ui/table'
 import { StatusDropdown } from './StatusDropdown'
 import { MoveMenu } from './MoveMenu'
-import { InlineText } from './InlineText'
+import { InlineText } from '@/components/ui/inline-text'
 import { cn } from '@/lib/utils'
 
 export function FollowUpRow({ f, weekOptions, onDelete, onEditField, onMoveWeek }) {
   const isBlocker = f.status === 'blocker'
+  const isStuck = f.status === 'stuck'
+  const isDone = f.status === 'done'
   return (
-    <TR className={cn(isBlocker && 'bg-red-50/30 dark:bg-red-950/10')}>
-      <TD className={cn('align-top py-2', isBlocker && 'border-l-2 border-l-red-400 dark:border-l-red-700')}>
+    <TR
+      className={cn(
+        'transition-colors duration-[180ms]',
+        isBlocker && 'bg-red-50/40 dark:bg-red-950/10',
+        isStuck && 'bg-amber-50/30 dark:bg-amber-950/10',
+        isDone && 'opacity-60'
+      )}
+    >
+      <TD
+        className={cn(
+          'align-top py-2',
+          isBlocker && 'border-l-[3px] border-l-red-400 dark:border-l-red-700',
+          isStuck && !isBlocker && 'border-l-[3px] border-l-amber-400 dark:border-l-amber-700'
+        )}
+      >
         <InlineText
           value={f.item}
           onCommit={(v) => onEditField(f.id, 'item', v)}
           placeholder={isBlocker ? 'What is blocked…' : 'Describe the priority…'}
-          textClassName="text-sm font-medium leading-snug"
+          textClassName={cn('text-sm font-medium leading-snug', isDone && 'line-through')}
           multiline
         />
       </TD>
@@ -44,8 +59,9 @@ export function FollowUpRow({ f, weekOptions, onDelete, onEditField, onMoveWeek 
           <MoveMenu current={f.weekLabel} options={weekOptions} onSelect={(w) => onMoveWeek(f.id, w)} />
           <button
             onClick={() => onDelete(f.id)}
-            className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-destructive hover:bg-accent transition-colors duration-200"
-            aria-label="Delete"
+            className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-destructive hover:bg-accent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Delete row"
+            title="Delete"
           >
             <Trash2 size={13} />
           </button>
