@@ -4,7 +4,7 @@ export function PageHeader({ title, description, actions, className }) {
   return (
     <div
       className={cn(
-        'sticky top-0 z-30 -mx-5 md:-mx-8 px-5 md:px-8 py-4 md:py-5 mb-6 md:mb-8 bg-[#fbfbfd]/85 backdrop-blur-xl border-b border-border',
+        'sticky top-0 z-30 -mx-5 md:-mx-8 px-5 md:px-8 py-4 md:py-5 mb-6 md:mb-8 bg-[#fbfbfd]/85 dark:bg-neutral-950/85 backdrop-blur-xl border-b border-border',
         className
       )}
     >

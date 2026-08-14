@@ -10,7 +10,7 @@ export function AppShell({ children }) {
   const location = useLocation()
 
   return (
-    <div className="min-h-screen flex bg-[#fbfbfd]">
+    <div className="min-h-screen flex bg-[#fbfbfd] dark:bg-neutral-950">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
       <main className="flex-1 min-w-0 pb-20 md:pb-0">
         <motion.div

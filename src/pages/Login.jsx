@@ -31,7 +31,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#f5f5f7] px-5">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#f5f5f7] dark:bg-neutral-950 px-5">
       <div className="w-full max-w-[380px] flex flex-col items-center">
         <div className="h-16 w-16 rounded-[18px] bg-blue-500 grid place-items-center shadow-sm">
           <Compass size={32} className="text-white" strokeWidth={1.75} aria-hidden="true" />

@@ -33,7 +33,7 @@ export function nextWeekLabel(date = new Date()) {
 
 export function suggestedWeekOptions(date = new Date()) {
   const opts = []
-  for (let i = -1; i <= 4; i++) {
+  for (let i = 0; i <= 5; i++) {
     const d = new Date(date); d.setDate(d.getDate() + i * 7)
     opts.push(weekLabelFromDate(d))
   }

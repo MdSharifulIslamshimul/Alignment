@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, LineChart, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, LineChart, CalendarClock, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { UserMenu } from './UserMenu'
+import { useTheme } from '@/lib/ThemeProvider'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -52,10 +53,11 @@ function NavItem({ to, label, icon: Icon, end, collapsed }) {
 }
 
 export function Sidebar({ collapsed, onToggle }) {
+  const { theme, toggleTheme } = useTheme()
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col bg-white border-r border-border h-screen sticky top-0 transition-all',
+        'hidden md:flex flex-col bg-white dark:bg-neutral-900 border-r border-border h-screen sticky top-0 transition-all',
         collapsed ? 'w-[64px]' : 'w-[240px]'
       )}
       style={{ transitionDuration: '300ms', transitionTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' }}
@@ -82,6 +84,18 @@ export function Sidebar({ collapsed, onToggle }) {
 
       <div className={cn('p-2', collapsed ? 'space-y-1.5' : 'space-y-1')}>
         <UserMenu collapsed={collapsed} />
+        <button
+          onClick={toggleTheme}
+          className={cn(
+            'w-full flex items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-card/70 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            collapsed ? 'h-8 justify-center' : 'h-8 px-2.5 gap-2.5 text-[12px]'
+          )}
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={collapsed ? (theme === 'dark' ? 'Light mode' : 'Dark mode') : undefined}
+        >
+          {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          {!collapsed && <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>}
+        </button>
         <button
           onClick={onToggle}
           className={cn(
