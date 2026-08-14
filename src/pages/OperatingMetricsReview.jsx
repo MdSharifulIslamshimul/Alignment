@@ -69,7 +69,6 @@ export default function OperatingMetricsReview() {
     <>
       <PageHeader
         title="Operating Metrics Review"
-        description="Are we hitting the targets that matter?"
         actions={
           <div className="flex items-center gap-2">
             <Select value={squad} onChange={(e) => { setSquad(e.target.value); setVisible(PAGE_SIZE) }} className="h-9 w-[140px]">
