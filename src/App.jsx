@@ -4,7 +4,6 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AppShell } from '@/components/layout/AppShell'
 import Dashboard from '@/pages/Dashboard'
 import OperatingMetricsReview from '@/pages/OperatingMetricsReview'
-import Discovery from '@/pages/Discovery'
 import WeeklyCadence from '@/pages/WeeklyCadence'
 import Login from '@/pages/Login'
 
@@ -21,7 +20,6 @@ export default function App() {
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/metrics" element={<OperatingMetricsReview />} />
-                  <Route path="/discovery" element={<Discovery />} />
                   <Route path="/cadence" element={<WeeklyCadence />} />
                 </Routes>
               </AppShell>

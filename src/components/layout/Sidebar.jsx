@@ -1,12 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, LineChart, Compass, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, LineChart, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { UserMenu } from './UserMenu'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/metrics', label: 'Operating Metrics', icon: LineChart },
-  { to: '/discovery', label: 'Discovery', icon: Compass },
   { to: '/cadence', label: 'Weekly Cadence', icon: CalendarClock },
 ]
 
