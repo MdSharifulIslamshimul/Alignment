@@ -13,18 +13,10 @@ export function FollowUpRow({ f, weekOptions, onDelete, onEditField, onMoveWeek 
     <TR
       className={cn(
         'transition-colors duration-[180ms]',
-        isBlocker && 'bg-red-50/40 dark:bg-red-950/10',
-        isStuck && 'bg-amber-50/30 dark:bg-amber-950/10',
         isDone && 'opacity-60'
       )}
     >
-      <TD
-        className={cn(
-          'align-top py-2 border-r border-border/60',
-          isBlocker && 'border-l-[3px] border-l-red-400 dark:border-l-red-700',
-          isStuck && !isBlocker && 'border-l-[3px] border-l-amber-400 dark:border-l-amber-700'
-        )}
-      >
+      <TD className="align-top py-2 border-r border-border/60">
         <InlineText
           value={f.item}
           onCommit={(v) => onEditField(f.id, 'item', v)}
