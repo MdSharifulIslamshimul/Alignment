@@ -62,8 +62,14 @@ export function WeekSection({
             <colgroup>{COLS.map((c) => <col key={c.key} style={{ width: c.width }} />)}</colgroup>
             <thead className="bg-muted/30">
               <tr>
-                {COLS.map((c) => (
-                  <th key={c.key} className="px-4 py-2.5 text-left text-[12px] font-medium text-muted-foreground">
+                {COLS.map((c, i) => (
+                  <th
+                    key={c.key}
+                    className={
+                      'px-4 py-2.5 text-left text-[12px] font-medium text-muted-foreground' +
+                      (i < COLS.length - 1 ? ' border-r border-border/60' : '')
+                    }
+                  >
                     {c.label}
                   </th>
                 ))}

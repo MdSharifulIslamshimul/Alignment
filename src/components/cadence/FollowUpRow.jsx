@@ -20,7 +20,7 @@ export function FollowUpRow({ f, weekOptions, onDelete, onEditField, onMoveWeek 
     >
       <TD
         className={cn(
-          'align-top py-2',
+          'align-top py-2 border-r border-border/60',
           isBlocker && 'border-l-[3px] border-l-red-400 dark:border-l-red-700',
           isStuck && !isBlocker && 'border-l-[3px] border-l-amber-400 dark:border-l-amber-700'
         )}
@@ -33,7 +33,7 @@ export function FollowUpRow({ f, weekOptions, onDelete, onEditField, onMoveWeek 
           multiline
         />
       </TD>
-      <TD className="align-top py-2">
+      <TD className="align-top py-2 border-r border-border/60">
         <InlineText
           value={f.owner}
           onCommit={(v) => onEditField(f.id, 'owner', v)}
@@ -42,10 +42,10 @@ export function FollowUpRow({ f, weekOptions, onDelete, onEditField, onMoveWeek 
           multiline={false}
         />
       </TD>
-      <TD className="align-top py-3">
+      <TD className="align-top py-3 border-r border-border/60">
         <StatusDropdown status={f.status} onChange={(v) => onEditField(f.id, 'status', v)} />
       </TD>
-      <TD className="align-top py-2">
+      <TD className="align-top py-2 border-r border-border/60">
         <InlineText
           value={f.statusNote}
           onCommit={(v) => onEditField(f.id, 'statusNote', v)}
