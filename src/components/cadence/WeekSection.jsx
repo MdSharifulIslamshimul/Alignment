@@ -60,13 +60,13 @@ export function WeekSection({
         <div className="w-full overflow-x-auto">
           <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
             <colgroup>{COLS.map((c) => <col key={c.key} style={{ width: c.width }} />)}</colgroup>
-            <thead className="bg-muted/30">
+            <thead>
               <tr>
                 {COLS.map((c, i) => (
                   <th
                     key={c.key}
                     className={
-                      'px-4 py-2.5 text-left text-[12px] font-medium text-muted-foreground' +
+                      'px-4 py-2 text-left text-[11px] font-medium text-muted-foreground/80' +
                       (i < COLS.length - 1 ? ' border-r border-border/60' : '')
                     }
                   >
