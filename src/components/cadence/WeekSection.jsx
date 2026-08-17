@@ -44,7 +44,7 @@ export function WeekSection({
           {range}
         </span>
         {code && (
-          <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tracking-wide tabular-nums text-indigo-700 dark:text-indigo-200 bg-indigo-100/70 dark:bg-indigo-400/10 ring-1 ring-inset ring-indigo-200/70 dark:ring-indigo-300/20">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tracking-wide tabular-nums text-indigo-700 dark:text-indigo-200 bg-indigo-100/70 dark:bg-indigo-400/10 ring-1 ring-inset ring-indigo-200/70 dark:ring-indigo-300/20">
             {code}
           </span>
         )}
