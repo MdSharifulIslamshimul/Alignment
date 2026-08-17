@@ -26,19 +26,28 @@ export function WeekSection({
   const { code, range } = parseLabel(label)
 
   return (
-    <Card className="overflow-hidden mb-6">
+    <Card className="overflow-hidden mb-6 border-border/70">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2.5 bg-slate-50 dark:bg-slate-900/60 border-b border-border px-4 md:px-5 py-3 text-left hover:bg-slate-100 dark:hover:bg-slate-900/80 transition-colors duration-200"
+        className="group relative w-full flex items-center gap-3 px-4 md:px-5 py-3.5 text-left border-b border-border/60 bg-gradient-to-r from-indigo-50/70 via-slate-50/30 to-transparent dark:from-indigo-500/[0.07] dark:via-slate-900/40 dark:to-transparent hover:from-indigo-50 hover:via-slate-50/50 dark:hover:from-indigo-500/[0.12] dark:hover:via-slate-900/60 transition-colors duration-200"
         aria-expanded={open}
       >
-        <span className="text-muted-foreground/70">
+        <span
+          aria-hidden
+          className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-indigo-400 via-indigo-500 to-violet-500 dark:from-indigo-400 dark:via-indigo-400 dark:to-violet-400 opacity-90"
+        />
+        <span className="text-indigo-500/80 dark:text-indigo-300/80 transition-transform duration-200 group-hover:translate-x-0.5">
           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         </span>
         <span className="text-[15px] font-semibold tracking-tight text-foreground">
-          {range}{code && <span className="text-muted-foreground font-medium ml-1.5">({code})</span>}
+          {range}
         </span>
+        {code && (
+          <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tracking-wide tabular-nums text-indigo-700 dark:text-indigo-200 bg-indigo-100/70 dark:bg-indigo-400/10 ring-1 ring-inset ring-indigo-200/70 dark:ring-indigo-300/20">
+            {code}
+          </span>
+        )}
       </button>
 
       {open && (
