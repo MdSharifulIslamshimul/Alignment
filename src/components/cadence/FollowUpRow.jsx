@@ -34,7 +34,7 @@ export function FollowUpRow({ f, weekOptions, onDelete, onEditField, onMoveWeek 
           multiline={false}
         />
       </TD>
-      <TD className="align-top py-3 border-r border-border/60">
+      <TD className="align-top py-3 border-r border-border/60 text-center">
         <StatusDropdown status={f.status} onChange={(v) => onEditField(f.id, 'status', v)} />
       </TD>
       <TD className="align-top py-2 border-r border-border/60">

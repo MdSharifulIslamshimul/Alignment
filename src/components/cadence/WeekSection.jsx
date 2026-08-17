@@ -5,11 +5,11 @@ import { FollowUpRow } from './FollowUpRow'
 import { AddRowInline } from './AddRowInline'
 
 const COLS = [
-  { key: 'item',    label: 'Follow up / Blocker', width: '40%' },
-  { key: 'owner',   label: 'Owner',               width: '10%' },
-  { key: 'status',  label: 'Status',              width: '10%' },
-  { key: 'remarks', label: 'Remarks',             width: '35%' },
-  { key: 'actions', label: '',                    width: '5%' },
+  { key: 'item',    label: 'Follow up / Blocker', width: '38%', align: 'left' },
+  { key: 'owner',   label: 'Owner',               width: '11%', align: 'left' },
+  { key: 'status',  label: 'Status',              width: '14%', align: 'center' },
+  { key: 'remarks', label: 'Remarks',             width: '32%', align: 'left' },
+  { key: 'actions', label: '',                    width: '5%',  align: 'right' },
 ]
 
 function parseLabel(label) {
@@ -60,7 +60,7 @@ export function WeekSection({
                   <th
                     key={c.key}
                     className={
-                      'px-4 py-3 text-left text-[13px] font-semibold text-foreground/70' +
+                      `px-4 py-3 text-${c.align} text-[13px] font-semibold text-foreground/70` +
                       (i < COLS.length - 1 ? ' border-r border-border/60' : '')
                     }
                   >
