@@ -54,3 +54,60 @@ export function nextLabelAfter(label) {
   const next = new Date(monday); next.setDate(next.getDate() + 7)
   return weekLabelFromDate(next)
 }
+
+export function mondayFromLabelSmart(label, today = new Date()) {
+  if (!label) return null
+  const m = label.match(/([A-Za-z]{3,})\s+(\d{1,2})/)
+  if (!m) return null
+  const monthName = m[1]
+  const day = m[2]
+  const currentYear = today.getFullYear()
+  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() + 35)
+  const candidates = [currentYear - 1, currentYear, currentYear + 1]
+    .map((y) => {
+      const d = new Date(`${monthName} ${day} ${y}`)
+      return isNaN(d.getTime()) ? null : mondayOf(d)
+    })
+    .filter(Boolean)
+    .filter((d) => d <= cutoff)
+  if (candidates.length === 0) return null
+  candidates.sort((a, b) => Math.abs(today - a) - Math.abs(today - b))
+  return candidates[0]
+}
+
+export function monthKeyFromDate(date) {
+  if (!date) return null
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  return `${y}-${m}`
+}
+
+export function quarterKeyFromDate(date) {
+  if (!date) return null
+  const q = Math.floor(date.getMonth() / 3) + 1
+  return `${date.getFullYear()}-Q${q}`
+}
+
+export function formatMonthLabel(monthKey) {
+  if (!monthKey) return ''
+  const [y, m] = monthKey.split('-')
+  const idx = parseInt(m, 10) - 1
+  return `${MONTHS[idx]} ${y}`
+}
+
+export function formatQuarterLabel(quarterKey) {
+  if (!quarterKey) return ''
+  const [y, q] = quarterKey.split('-Q')
+  const qi = parseInt(q, 10) - 1
+  const startIdx = qi * 3
+  const endIdx = startIdx + 2
+  return `Q${q} ${y} · ${MONTHS[startIdx]}–${MONTHS[endIdx]}`
+}
+
+export function currentMonthKey(today = new Date()) {
+  return monthKeyFromDate(today)
+}
+
+export function currentQuarterKey(today = new Date()) {
+  return quarterKeyFromDate(today)
+}

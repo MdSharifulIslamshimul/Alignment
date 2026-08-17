@@ -7,37 +7,109 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { LoadingBlock } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error-state'
 import { WeekSection } from '@/components/cadence/WeekSection'
+import { MonthlyScopeSection } from '@/components/cadence/MonthlyScopeSection'
+import { QuarterlyScopeSection } from '@/components/cadence/QuarterlyScopeSection'
 import { toast } from '@/components/ui/toaster'
-import { weekLabelFromDate, suggestedWeekOptions } from '@/lib/week'
+import {
+  weekLabelFromDate, suggestedWeekOptions,
+  mondayFromLabelSmart, monthKeyFromDate, quarterKeyFromDate,
+  formatMonthLabel, formatQuarterLabel,
+  currentMonthKey, currentQuarterKey,
+} from '@/lib/week'
 import { listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp } from '@/lib/api'
 
 const UNSCHEDULED = 'Unscheduled'
 const FIELD_TO_DB = { item: 'item', owner: 'owner', statusNote: 'status_note', kind: 'kind', status: 'status' }
 
-function groupByWeek(items, filter) {
+function filterItems(items, filter) {
   const q = filter.trim().toLowerCase()
-  const filtered = q
-    ? items.filter((f) => [f.item, f.owner, f.statusNote].some((v) => (v || '').toLowerCase().includes(q)))
-    : items
-  const map = new Map()
-  for (const f of filtered) {
-    const key = f.weekLabel || UNSCHEDULED
-    if (!map.has(key)) map.set(key, [])
-    map.get(key).push(f)
-  }
-  for (const [, list] of map) {
-    list.sort((a, b) => (a.status === 'blocker' ? 1 : 0) - (b.status === 'blocker' ? 1 : 0))
-  }
-  return map
+  if (!q) return items
+  return items.filter((f) => [f.item, f.owner, f.statusNote].some((v) => (v || '').toLowerCase().includes(q)))
 }
 
-function orderWeeks(keys) {
-  const parseWeek = (l) => { const m = l.match(/^W(\d+)/); return m ? parseInt(m[1], 10) : -1 }
-  return keys.sort((a, b) => {
-    if (a === UNSCHEDULED) return 1
-    if (b === UNSCHEDULED) return -1
-    return parseWeek(b) - parseWeek(a)
-  })
+function sortWithinWeek(list) {
+  return [...list].sort((a, b) => (a.status === 'blocker' ? 1 : 0) - (b.status === 'blocker' ? 1 : 0))
+}
+
+function buildTiers(items, filter, today, currentLabel) {
+  const filtered = filterItems(items, filter)
+  const monthNow = currentMonthKey(today)
+  const quarterNow = currentQuarterKey(today)
+
+  const byWeek = new Map()
+  const unscheduled = []
+  const weekMeta = new Map()
+
+  for (const f of filtered) {
+    if (!f.weekLabel) { unscheduled.push(f); continue }
+    if (!byWeek.has(f.weekLabel)) byWeek.set(f.weekLabel, [])
+    byWeek.get(f.weekLabel).push(f)
+    if (!weekMeta.has(f.weekLabel)) {
+      const monday = mondayFromLabelSmart(f.weekLabel, today)
+      weekMeta.set(f.weekLabel, {
+        monday,
+        monthKey: monday ? monthKeyFromDate(monday) : null,
+        quarterKey: monday ? quarterKeyFromDate(monday) : null,
+      })
+    }
+  }
+
+  if (!filter && !byWeek.has(currentLabel)) {
+    byWeek.set(currentLabel, [])
+    const monday = mondayFromLabelSmart(currentLabel, today)
+    weekMeta.set(currentLabel, {
+      monday,
+      monthKey: monday ? monthKeyFromDate(monday) : null,
+      quarterKey: monday ? quarterKeyFromDate(monday) : null,
+    })
+  }
+
+  const liveWeeks = []
+  const monthBuckets = new Map()
+  const quarterBuckets = new Map()
+
+  for (const [label, list] of byWeek) {
+    const meta = weekMeta.get(label) || {}
+    const entry = { label, items: sortWithinWeek(list), monday: meta.monday }
+
+    if (!meta.monthKey || meta.monthKey === monthNow) {
+      liveWeeks.push(entry)
+    } else if (meta.quarterKey === quarterNow) {
+      if (!monthBuckets.has(meta.monthKey)) monthBuckets.set(meta.monthKey, [])
+      monthBuckets.get(meta.monthKey).push(entry)
+    } else {
+      if (!quarterBuckets.has(meta.quarterKey)) quarterBuckets.set(meta.quarterKey, new Map())
+      const mMap = quarterBuckets.get(meta.quarterKey)
+      if (!mMap.has(meta.monthKey)) mMap.set(meta.monthKey, [])
+      mMap.get(meta.monthKey).push(entry)
+    }
+  }
+
+  liveWeeks.sort((a, b) => (b.monday?.getTime() || 0) - (a.monday?.getTime() || 0))
+
+  const monthlyFolds = [...monthBuckets.entries()]
+    .sort(([a], [b]) => (a < b ? 1 : -1))
+    .map(([key, weeks]) => ({
+      key,
+      label: formatMonthLabel(key),
+      weeks: weeks.sort((a, b) => (b.monday?.getTime() || 0) - (a.monday?.getTime() || 0)),
+    }))
+
+  const quarterlyFolds = [...quarterBuckets.entries()]
+    .sort(([a], [b]) => (a < b ? 1 : -1))
+    .map(([qKey, mMap]) => ({
+      key: qKey,
+      label: formatQuarterLabel(qKey),
+      months: [...mMap.entries()]
+        .sort(([a], [b]) => (a < b ? 1 : -1))
+        .map(([mKey, weeks]) => ({
+          key: mKey,
+          label: formatMonthLabel(mKey),
+          weeks: weeks.sort((a, b) => (b.monday?.getTime() || 0) - (a.monday?.getTime() || 0)),
+        })),
+    }))
+
+  return { liveWeeks, monthlyFolds, quarterlyFolds, unscheduled: sortWithinWeek(unscheduled) }
 }
 
 export default function WeeklyCadence() {
@@ -65,17 +137,22 @@ export default function WeeklyCadence() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const groups = useMemo(() => {
-    const map = groupByWeek(followUps, query)
-    const keys = new Set(map.keys())
-    if (!query) keys.add(currentWeek)
-    const ordered = orderWeeks([...keys])
-    return ordered.map((label) => ({ label, items: map.get(label) || [] }))
-  }, [followUps, currentWeek, query])
+  const tiers = useMemo(
+    () => buildTiers(followUps, query, new Date(), currentWeek),
+    [followUps, currentWeek, query]
+  )
 
   const weekOptions = useMemo(() => {
-    const set = new Set([...suggestedWeekOptions(), ...followUps.map((f) => f.weekLabel).filter(Boolean)])
-    return orderWeeks([...set])
+    const today = new Date()
+    const set = new Set([
+      ...suggestedWeekOptions(),
+      ...followUps.map((f) => f.weekLabel).filter(Boolean),
+    ])
+    return [...set].sort((a, b) => {
+      const ma = mondayFromLabelSmart(a, today)
+      const mb = mondayFromLabelSmart(b, today)
+      return (mb?.getTime() || 0) - (ma?.getTime() || 0)
+    })
   }, [followUps])
 
   const removeFollowUp = async (id) => {
@@ -152,22 +229,69 @@ export default function WeeklyCadence() {
             description="Open a week and add your first follow-up or blocker to kick off the huddle."
           />
         </Card>
-      ) : hasQuery && groups.every((g) => g.items.length === 0) ? (
+      ) : hasQuery && tiers.liveWeeks.every((g) => g.items.length === 0)
+            && tiers.monthlyFolds.length === 0
+            && tiers.quarterlyFolds.length === 0
+            && tiers.unscheduled.length === 0 ? (
         <Card><EmptyState icon={Search} title="No matches" description={`Nothing matches "${query}".`} /></Card>
       ) : (
-        groups.map(({ label, items }) => (
-          <WeekSection
-            key={label}
-            label={label}
-            items={items}
-            weekOptions={weekOptions}
-            defaultOpen={label === currentWeek || items.length > 0}
-            onDelete={removeFollowUp}
-            onEditField={editField}
-            onMoveWeek={moveWeek}
-            onAdd={addFollowUp}
-          />
-        ))
+        <>
+          {tiers.liveWeeks.map(({ label, items }) => (
+            <WeekSection
+              key={label}
+              label={label}
+              items={items}
+              weekOptions={weekOptions}
+              defaultOpen={label === currentWeek || items.length > 0}
+              onDelete={removeFollowUp}
+              onEditField={editField}
+              onMoveWeek={moveWeek}
+              onAdd={addFollowUp}
+            />
+          ))}
+
+          {tiers.monthlyFolds.map((m) => (
+            <MonthlyScopeSection
+              key={m.key}
+              label={m.label}
+              weeks={m.weeks}
+              weekOptions={weekOptions}
+              forceOpen={hasQuery}
+              onDelete={removeFollowUp}
+              onEditField={editField}
+              onMoveWeek={moveWeek}
+              onAdd={addFollowUp}
+            />
+          ))}
+
+          {tiers.quarterlyFolds.map((q) => (
+            <QuarterlyScopeSection
+              key={q.key}
+              label={q.label}
+              months={q.months}
+              weekOptions={weekOptions}
+              forceOpen={hasQuery}
+              onDelete={removeFollowUp}
+              onEditField={editField}
+              onMoveWeek={moveWeek}
+              onAdd={addFollowUp}
+            />
+          ))}
+
+          {tiers.unscheduled.length > 0 && (
+            <WeekSection
+              key={UNSCHEDULED}
+              label={UNSCHEDULED}
+              items={tiers.unscheduled}
+              weekOptions={weekOptions}
+              defaultOpen={false}
+              onDelete={removeFollowUp}
+              onEditField={editField}
+              onMoveWeek={moveWeek}
+              onAdd={addFollowUp}
+            />
+          )}
+        </>
       )}
     </>
   )
