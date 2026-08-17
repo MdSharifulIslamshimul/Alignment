@@ -31,9 +31,9 @@ export function nextWeekLabel(date = new Date()) {
   return weekLabelFromDate(d)
 }
 
-export function suggestedWeekOptions(date = new Date()) {
+export function suggestedWeekOptions(date = new Date(), { past = 12, future = 5 } = {}) {
   const opts = []
-  for (let i = -4; i <= 5; i++) {
+  for (let i = -past; i <= future; i++) {
     const d = new Date(date); d.setDate(d.getDate() + i * 7)
     opts.push(weekLabelFromDate(d))
   }
