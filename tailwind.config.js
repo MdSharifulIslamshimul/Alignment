@@ -2,6 +2,7 @@
 export default {
   darkMode: ['class'],
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  safelist: ['text-left', 'text-center', 'text-right'],
   theme: {
     extend: {
       fontFamily: {
