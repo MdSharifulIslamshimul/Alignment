@@ -120,16 +120,30 @@ export function MonthSection({
                   </td>
                 </tr>
               ) : (
-                items.map((f) => (
-                  <MonthRow
-                    key={f.id}
-                    f={f}
-                    weekOptions={weekOptions}
-                    onDelete={onDelete}
-                    onEditField={onEditField}
-                    onMoveWeek={onMoveWeek}
-                  />
-                ))
+                items.flatMap((f, i) => {
+                  const prev = items[i - 1]
+                  const rowsForItem = []
+                  if (prev && prev.weekLabel !== f.weekLabel) {
+                    rowsForItem.push(
+                      <tr key={`div-${f.id}`} aria-hidden="true">
+                        <td colSpan={COLS.length} className="p-0">
+                          <div className="h-1.5 bg-muted/50 dark:bg-muted/25" />
+                        </td>
+                      </tr>
+                    )
+                  }
+                  rowsForItem.push(
+                    <MonthRow
+                      key={f.id}
+                      f={f}
+                      weekOptions={weekOptions}
+                      onDelete={onDelete}
+                      onEditField={onEditField}
+                      onMoveWeek={onMoveWeek}
+                    />
+                  )
+                  return rowsForItem
+                })
               )}
             </tbody>
           </table>
