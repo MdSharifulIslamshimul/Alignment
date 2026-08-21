@@ -6,19 +6,17 @@ import { Input } from '@/components/ui/input'
 import { EmptyState } from '@/components/ui/empty-state'
 import { LoadingBlock } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error-state'
-import { WeekSection } from '@/components/cadence/WeekSection'
-import { MonthlyScopeSection } from '@/components/cadence/MonthlyScopeSection'
+import { MonthSection } from '@/components/cadence/MonthSection'
 import { QuarterlyScopeSection } from '@/components/cadence/QuarterlyScopeSection'
 import { toast } from '@/components/ui/toaster'
 import {
   weekLabelFromDate, suggestedWeekOptions,
   mondayFromLabelSmart, monthKeyFromDate, quarterKeyFromDate,
   formatMonthLabel, formatQuarterLabel,
-  currentMonthKey, currentQuarterKey,
+  currentMonthKey, currentQuarterKey, mondayOf,
 } from '@/lib/week'
 import { listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp } from '@/lib/api'
 
-const UNSCHEDULED = 'Unscheduled'
 const FIELD_TO_DB = { item: 'item', owner: 'owner', statusNote: 'status_note', kind: 'kind', status: 'status' }
 
 function filterItems(items, filter) {
@@ -27,8 +25,34 @@ function filterItems(items, filter) {
   return items.filter((f) => [f.item, f.owner, f.statusNote].some((v) => (v || '').toLowerCase().includes(q)))
 }
 
-function sortWithinWeek(list) {
-  return [...list].sort((a, b) => (a.status === 'blocker' ? 1 : 0) - (b.status === 'blocker' ? 1 : 0))
+function sortByWeekAndStatus(list, today) {
+  return [...list].sort((a, b) => {
+    const ma = mondayFromLabelSmart(a.weekLabel, today)?.getTime() || 0
+    const mb = mondayFromLabelSmart(b.weekLabel, today)?.getTime() || 0
+    if (ma !== mb) return mb - ma
+    return (a.status === 'blocker' ? 1 : 0) - (b.status === 'blocker' ? 1 : 0)
+  })
+}
+
+function buildMonthWeekOptions(itemWeeks, monthKey, today) {
+  const set = new Set(itemWeeks)
+  // Fill in every Monday-in-month between the earliest item and today (or the last item, whichever is later),
+  // so the add-row picker can offer weeks that don't have items yet.
+  const [y, m] = monthKey.split('-').map(Number)
+  const monthStart = new Date(y, m - 1, 1)
+  const monthEnd = new Date(y, m, 0)   // last day of month
+  let cursor = mondayOf(monthStart)
+  while (cursor <= monthEnd) {
+    if (cursor.getMonth() === m - 1) set.add(weekLabelFromDate(cursor))
+    const next = new Date(cursor)
+    next.setDate(next.getDate() + 7)
+    cursor = next
+  }
+  return [...set].sort((a, b) => {
+    const ma = mondayFromLabelSmart(a, today)?.getTime() || 0
+    const mb = mondayFromLabelSmart(b, today)?.getTime() || 0
+    return mb - ma
+  })
 }
 
 function buildTiers(items, filter, today, currentLabel) {
@@ -36,80 +60,81 @@ function buildTiers(items, filter, today, currentLabel) {
   const monthNow = currentMonthKey(today)
   const quarterNow = currentQuarterKey(today)
 
-  const byWeek = new Map()
+  // Bucket every filtered item by month.
+  const monthBuckets = new Map()   // monthKey → { items: [], weeks: Set<label>, quarterKey }
   const unscheduled = []
-  const weekMeta = new Map()
+
+  const bucketFor = (monthKey, quarterKey) => {
+    if (!monthBuckets.has(monthKey)) {
+      monthBuckets.set(monthKey, { items: [], weeks: new Set(), quarterKey })
+    }
+    return monthBuckets.get(monthKey)
+  }
 
   for (const f of filtered) {
     if (!f.weekLabel) { unscheduled.push(f); continue }
-    if (!byWeek.has(f.weekLabel)) byWeek.set(f.weekLabel, [])
-    byWeek.get(f.weekLabel).push(f)
-    if (!weekMeta.has(f.weekLabel)) {
-      const monday = mondayFromLabelSmart(f.weekLabel, today)
-      weekMeta.set(f.weekLabel, {
-        monday,
-        monthKey: monday ? monthKeyFromDate(monday) : null,
-        quarterKey: monday ? quarterKeyFromDate(monday) : null,
-      })
+    const monday = mondayFromLabelSmart(f.weekLabel, today)
+    if (!monday) { unscheduled.push(f); continue }
+    const mk = monthKeyFromDate(monday)
+    const qk = quarterKeyFromDate(monday)
+    const b = bucketFor(mk, qk)
+    b.items.push(f)
+    b.weeks.add(f.weekLabel)
+  }
+
+  // Ensure the live month always renders, even empty, so the user has a place to add.
+  if (!filter && !monthBuckets.has(monthNow)) {
+    bucketFor(monthNow, quarterNow)
+  }
+  // Ensure current week is offered in the picker when the live month has no items yet.
+  if (monthBuckets.has(monthNow) && currentLabel) {
+    monthBuckets.get(monthNow).weeks.add(currentLabel)
+  }
+
+  // Build tier-scoped view models.
+  const currentWeekMonday = mondayFromLabelSmart(currentLabel, today)?.getTime() || 0
+  let liveMonth = null
+  const monthlyFolds = []
+  const quarterBuckets = new Map() // quarterKey → Map<monthKey, entry>
+
+  for (const [mKey, b] of monthBuckets.entries()) {
+    const monthWeekOptions = buildMonthWeekOptions(b.weeks, mKey, today)
+    const defaultAddWeek = monthWeekOptions.includes(currentLabel) ? currentLabel : monthWeekOptions[0]
+    const entry = {
+      key: mKey,
+      label: formatMonthLabel(mKey),
+      items: sortByWeekAndStatus(b.items, today),
+      monthWeekOptions,
+      defaultAddWeek,
     }
-  }
 
-  if (!filter && !byWeek.has(currentLabel)) {
-    byWeek.set(currentLabel, [])
-    const monday = mondayFromLabelSmart(currentLabel, today)
-    weekMeta.set(currentLabel, {
-      monday,
-      monthKey: monday ? monthKeyFromDate(monday) : null,
-      quarterKey: monday ? quarterKeyFromDate(monday) : null,
-    })
-  }
-
-  const liveWeeks = []
-  const monthBuckets = new Map()
-  const quarterBuckets = new Map()
-
-  for (const [label, list] of byWeek) {
-    const meta = weekMeta.get(label) || {}
-    const entry = { label, items: sortWithinWeek(list), monday: meta.monday }
-
-    if (!meta.monthKey || meta.monthKey === monthNow) {
-      liveWeeks.push(entry)
-    } else if (meta.quarterKey === quarterNow) {
-      if (!monthBuckets.has(meta.monthKey)) monthBuckets.set(meta.monthKey, [])
-      monthBuckets.get(meta.monthKey).push(entry)
+    if (mKey === monthNow) {
+      liveMonth = entry
+    } else if (b.quarterKey === quarterNow) {
+      monthlyFolds.push(entry)
     } else {
-      if (!quarterBuckets.has(meta.quarterKey)) quarterBuckets.set(meta.quarterKey, new Map())
-      const mMap = quarterBuckets.get(meta.quarterKey)
-      if (!mMap.has(meta.monthKey)) mMap.set(meta.monthKey, [])
-      mMap.get(meta.monthKey).push(entry)
+      if (!quarterBuckets.has(b.quarterKey)) quarterBuckets.set(b.quarterKey, new Map())
+      quarterBuckets.get(b.quarterKey).set(mKey, entry)
     }
   }
 
-  liveWeeks.sort((a, b) => (b.monday?.getTime() || 0) - (a.monday?.getTime() || 0))
-
-  const monthlyFolds = [...monthBuckets.entries()]
-    .sort(([a], [b]) => (a < b ? 1 : -1))
-    .map(([key, weeks]) => ({
-      key,
-      label: formatMonthLabel(key),
-      weeks: weeks.sort((a, b) => (b.monday?.getTime() || 0) - (a.monday?.getTime() || 0)),
-    }))
+  monthlyFolds.sort((a, b) => (a.key < b.key ? 1 : -1))
 
   const quarterlyFolds = [...quarterBuckets.entries()]
     .sort(([a], [b]) => (a < b ? 1 : -1))
     .map(([qKey, mMap]) => ({
       key: qKey,
       label: formatQuarterLabel(qKey),
-      months: [...mMap.entries()]
-        .sort(([a], [b]) => (a < b ? 1 : -1))
-        .map(([mKey, weeks]) => ({
-          key: mKey,
-          label: formatMonthLabel(mKey),
-          weeks: weeks.sort((a, b) => (b.monday?.getTime() || 0) - (a.monday?.getTime() || 0)),
-        })),
+      months: [...mMap.values()].sort((a, b) => (a.key < b.key ? 1 : -1)),
     }))
 
-  return { liveWeeks, monthlyFolds, quarterlyFolds, unscheduled: sortWithinWeek(unscheduled) }
+  return {
+    liveMonth,
+    monthlyFolds,
+    quarterlyFolds,
+    unscheduled: sortByWeekAndStatus(unscheduled, today),
+    currentWeekMonday,
+  }
 }
 
 export default function WeeklyCadence() {
@@ -118,7 +143,8 @@ export default function WeeklyCadence() {
   const [error, setError] = useState(null)
   const [query, setQuery] = useState('')
   const searchRef = useRef(null)
-  const currentWeek = weekLabelFromDate()
+  const today = useMemo(() => new Date(), [])
+  const currentWeek = useMemo(() => weekLabelFromDate(today), [today])
 
   const load = async () => {
     setStatus('loading'); setError(null)
@@ -138,12 +164,11 @@ export default function WeeklyCadence() {
   }, [])
 
   const tiers = useMemo(
-    () => buildTiers(followUps, query, new Date(), currentWeek),
-    [followUps, currentWeek, query]
+    () => buildTiers(followUps, query, today, currentWeek),
+    [followUps, currentWeek, query, today]
   )
 
   const weekOptions = useMemo(() => {
-    const today = new Date()
     const set = new Set([
       ...suggestedWeekOptions(),
       ...followUps.map((f) => f.weekLabel).filter(Boolean),
@@ -153,7 +178,7 @@ export default function WeeklyCadence() {
       const mb = mondayFromLabelSmart(b, today)
       return (mb?.getTime() || 0) - (ma?.getTime() || 0)
     })
-  }, [followUps])
+  }, [followUps, today])
 
   const removeFollowUp = async (id) => {
     const snapshot = followUps.find((r) => r.id === id)
@@ -165,10 +190,7 @@ export default function WeeklyCadence() {
       duration: 5000,
       action: {
         label: 'Undo',
-        onClick: () => {
-          undone = true
-          setFollowUps((rs) => [snapshot, ...rs])
-        },
+        onClick: () => { undone = true; setFollowUps((rs) => [snapshot, ...rs]) },
       },
     })
     setTimeout(async () => {
@@ -199,6 +221,13 @@ export default function WeeklyCadence() {
   }
 
   const hasQuery = query.trim().length > 0
+  const nothingVisible =
+    hasQuery
+    && (!tiers.liveMonth || tiers.liveMonth.items.length === 0)
+    && tiers.monthlyFolds.length === 0
+    && tiers.quarterlyFolds.length === 0
+    && tiers.unscheduled.length === 0
+
   return (
     <>
       <PageHeader
@@ -226,37 +255,42 @@ export default function WeeklyCadence() {
           <EmptyState
             icon={CalendarClock}
             title="Nothing scheduled yet"
-            description="Open a week and add your first follow-up or blocker to kick off the huddle."
+            description="Add your first follow-up or blocker to kick off the huddle."
           />
         </Card>
-      ) : hasQuery && tiers.liveWeeks.every((g) => g.items.length === 0)
-            && tiers.monthlyFolds.length === 0
-            && tiers.quarterlyFolds.length === 0
-            && tiers.unscheduled.length === 0 ? (
+      ) : nothingVisible ? (
         <Card><EmptyState icon={Search} title="No matches" description={`Nothing matches "${query}".`} /></Card>
       ) : (
         <>
-          {tiers.liveWeeks.map(({ label, items }) => (
-            <WeekSection
-              key={label}
-              label={label}
-              items={items}
+          {tiers.liveMonth && (
+            <MonthSection
+              key={tiers.liveMonth.key}
+              label={tiers.liveMonth.label}
+              items={tiers.liveMonth.items}
               weekOptions={weekOptions}
-              defaultOpen={label === currentWeek || items.length > 0}
+              monthWeekOptions={tiers.liveMonth.monthWeekOptions}
+              defaultAddWeek={tiers.liveMonth.defaultAddWeek}
+              defaultOpen={true}
+              forceOpen={hasQuery}
+              variant="current"
               onDelete={removeFollowUp}
               onEditField={editField}
               onMoveWeek={moveWeek}
               onAdd={addFollowUp}
             />
-          ))}
+          )}
 
           {tiers.monthlyFolds.map((m) => (
-            <MonthlyScopeSection
+            <MonthSection
               key={m.key}
               label={m.label}
-              weeks={m.weeks}
+              items={m.items}
               weekOptions={weekOptions}
+              monthWeekOptions={m.monthWeekOptions}
+              defaultAddWeek={m.defaultAddWeek}
+              defaultOpen={false}
               forceOpen={hasQuery}
+              variant="scope"
               onDelete={removeFollowUp}
               onEditField={editField}
               onMoveWeek={moveWeek}
@@ -279,12 +313,16 @@ export default function WeeklyCadence() {
           ))}
 
           {tiers.unscheduled.length > 0 && (
-            <WeekSection
-              key={UNSCHEDULED}
-              label={UNSCHEDULED}
+            <MonthSection
+              key="unscheduled"
+              label="Unscheduled"
               items={tiers.unscheduled}
               weekOptions={weekOptions}
+              monthWeekOptions={[]}
+              defaultAddWeek=""
               defaultOpen={false}
+              forceOpen={hasQuery}
+              variant="unscheduled"
               onDelete={removeFollowUp}
               onEditField={editField}
               onMoveWeek={moveWeek}

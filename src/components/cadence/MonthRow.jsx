@@ -5,17 +5,26 @@ import { MoveMenu } from './MoveMenu'
 import { InlineText } from '@/components/ui/inline-text'
 import { cn } from '@/lib/utils'
 
-export function FollowUpRow({ f, weekOptions, onDelete, onEditField, onMoveWeek }) {
+function WeekTag({ weekLabel }) {
+  const code = weekLabel?.match(/^(W\d+)/)?.[1] || ''
+  if (!code) {
+    return <span className="text-xs text-muted-foreground/60">—</span>
+  }
+  return (
+    <span
+      title={weekLabel}
+      className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums text-indigo-700 dark:text-indigo-200 bg-indigo-100/70 dark:bg-indigo-400/10 ring-1 ring-inset ring-indigo-200/70 dark:ring-indigo-300/20"
+    >
+      {code}
+    </span>
+  )
+}
+
+export function MonthRow({ f, weekOptions, onDelete, onEditField, onMoveWeek }) {
   const isBlocker = f.status === 'blocker'
-  const isStuck = f.status === 'stuck'
   const isDone = f.status === 'done'
   return (
-    <TR
-      className={cn(
-        'transition-colors duration-[180ms]',
-        isDone && 'opacity-60'
-      )}
-    >
+    <TR className={cn('transition-colors duration-[180ms]', isDone && 'opacity-60')}>
       <TD className="align-top py-2 border-r border-border/60">
         <InlineText
           value={f.item}
@@ -35,13 +44,16 @@ export function FollowUpRow({ f, weekOptions, onDelete, onEditField, onMoveWeek 
         />
       </TD>
       <TD className="align-top py-3 border-r border-border/60 text-center">
+        <WeekTag weekLabel={f.weekLabel} />
+      </TD>
+      <TD className="align-top py-3 border-r border-border/60 text-center">
         <StatusDropdown status={f.status} onChange={(v) => onEditField(f.id, 'status', v)} />
       </TD>
       <TD className="align-top py-2 border-r border-border/60">
         <InlineText
           value={f.statusNote}
           onCommit={(v) => onEditField(f.id, 'statusNote', v)}
-          placeholder={isBlocker ? 'Why it\'s blocking…' : 'Add remarks…'}
+          placeholder={isBlocker ? "Why it's blocking…" : 'Add remarks…'}
           textClassName="text-sm text-foreground/80"
           multiline
         />

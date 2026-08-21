@@ -1,21 +1,35 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Select } from '@/components/ui/select'
 
-export function AddRowInline({ weekLabel, onAdd }) {
+export function AddRowInline({ weekOptions, defaultWeek, onAdd }) {
   const [open, setOpen] = useState(false)
   const [item, setItem] = useState('')
   const [owner, setOwner] = useState('')
+  const [week, setWeek] = useState(defaultWeek ?? '')
   const itemRef = useRef(null)
+  const hasPicker = Array.isArray(weekOptions) && weekOptions.length > 0
+
+  useEffect(() => { setWeek(defaultWeek ?? '') }, [defaultWeek])
 
   const start = () => {
-    setOpen(true); setItem(''); setOwner('')
+    setOpen(true)
+    setItem(''); setOwner('')
+    setWeek(defaultWeek ?? '')
     setTimeout(() => itemRef.current?.focus(), 0)
   }
   const submit = () => {
     if (!item.trim()) return
-    onAdd({ item: item.trim(), owner: owner.trim(), weekLabel, status: 'not_started', statusNote: '', kind: 'priority' })
+    onAdd({
+      item: item.trim(),
+      owner: owner.trim(),
+      weekLabel: week || '',
+      status: 'not_started',
+      statusNote: '',
+      kind: 'priority',
+    })
     setItem(''); setOwner('')
     setTimeout(() => itemRef.current?.focus(), 0)
   }
@@ -49,8 +63,22 @@ export function AddRowInline({ weekLabel, onAdd }) {
           onChange={(e) => setOwner(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') cancel() }}
           placeholder="Owner"
-          className="h-8 w-[140px]"
+          className="h-8 w-[120px]"
         />
+        {hasPicker && (
+          <Select
+            value={week}
+            onChange={(e) => setWeek(e.target.value)}
+            className="h-8 w-[92px] text-xs"
+            aria-label="Target week"
+            title="Target week"
+          >
+            {weekOptions.map((w) => {
+              const code = w.match(/^(W\d+)/)?.[1] || w.slice(0, 12)
+              return <option key={w} value={w}>{code}</option>
+            })}
+          </Select>
+        )}
         <Button size="sm" onClick={submit}>Add</Button>
         <Button size="sm" variant="ghost" onClick={cancel}>Cancel</Button>
       </div>

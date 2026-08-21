@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/card'
-import { MonthlyScopeSection } from './MonthlyScopeSection'
+import { MonthSection } from './MonthSection'
 
 function summarize(months) {
   let total = 0, done = 0, blocked = 0
   for (const m of months) {
-    for (const w of m.weeks) {
-      for (const it of w.items) {
-        total++
-        if (it.status === 'done') done++
-        else if (it.status === 'blocker' || it.status === 'stuck') blocked++
-      }
+    for (const it of m.items) {
+      total++
+      if (it.status === 'done') done++
+      else if (it.status === 'blocker' || it.status === 'stuck') blocked++
     }
   }
   return { total, done, blocked }
@@ -45,9 +43,7 @@ export function QuarterlyScopeSection({
         <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-rose-700/80 dark:text-rose-300/80">
           Quarterly Scope
         </span>
-        <span className="text-[15px] font-semibold tracking-tight text-foreground">
-          {label}
-        </span>
+        <span className="text-[15px] font-semibold tracking-tight text-foreground">{label}</span>
         <span className="ml-auto inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums text-rose-800 dark:text-rose-100 bg-rose-100/70 dark:bg-rose-400/10 ring-1 ring-inset ring-rose-200/70 dark:ring-rose-300/20">
           <span>{months.length} month{months.length === 1 ? '' : 's'}</span>
           <span>· {total} item{total === 1 ? '' : 's'}</span>
@@ -59,12 +55,16 @@ export function QuarterlyScopeSection({
       {open && (
         <div className="p-3 md:p-4 bg-rose-50/20 dark:bg-rose-500/[0.02]">
           {months.map((m) => (
-            <MonthlyScopeSection
-              key={m.label}
+            <MonthSection
+              key={m.key}
               label={m.label}
-              weeks={m.weeks}
+              items={m.items}
               weekOptions={weekOptions}
+              monthWeekOptions={m.monthWeekOptions}
+              defaultAddWeek={m.defaultAddWeek}
+              defaultOpen={forceOpen}
               forceOpen={forceOpen}
+              variant="quarter"
               onDelete={onDelete}
               onEditField={onEditField}
               onMoveWeek={onMoveWeek}
