@@ -6,16 +6,17 @@ import { InlineText } from '@/components/ui/inline-text'
 import { cn } from '@/lib/utils'
 
 function WeekTag({ weekLabel }) {
-  const code = weekLabel?.match(/^(W\d+)/)?.[1] || ''
-  if (!code) {
+  if (!weekLabel) {
     return <span className="text-xs text-muted-foreground/60">—</span>
   }
+  const code = weekLabel.match(/^(W\d+)/)?.[1] || ''
+  const range = weekLabel.replace(/^W\d+\s*:\s*/, '').trim() || weekLabel
   return (
     <span
-      title={weekLabel}
-      className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums text-indigo-700 dark:text-indigo-200 bg-indigo-100/70 dark:bg-indigo-400/10 ring-1 ring-inset ring-indigo-200/70 dark:ring-indigo-300/20"
+      title={code || weekLabel}
+      className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums text-indigo-700 dark:text-indigo-200 bg-indigo-100/70 dark:bg-indigo-400/10 ring-1 ring-inset ring-indigo-200/70 dark:ring-indigo-300/20 whitespace-nowrap"
     >
-      {code}
+      {range}
     </span>
   )
 }

@@ -6,11 +6,11 @@ import { AddRowInline } from './AddRowInline'
 import { statusRank } from '@/lib/statusOrder'
 
 const COLS = [
-  { key: 'item',    label: 'Follow up / Blocker', width: '32%', align: 'left'   },
+  { key: 'item',    label: 'Follow up / Blocker', width: '29%', align: 'left'   },
   { key: 'owner',   label: 'Owner',               width: '10%', align: 'left'   },
-  { key: 'week',    label: 'Week',                width: '8%',  align: 'center' },
+  { key: 'week',    label: 'Week',                width: '12%', align: 'center' },
   { key: 'status',  label: 'Status',              width: '12%', align: 'center' },
-  { key: 'remarks', label: 'Remarks',             width: '33%', align: 'left'   },
+  { key: 'remarks', label: 'Remarks',             width: '32%', align: 'left'   },
   { key: 'actions', label: '',                    width: '5%',  align: 'right'  },
 ]
 
