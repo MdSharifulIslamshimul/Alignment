@@ -26,14 +26,27 @@ function filterItems(items, filter) {
   return items.filter((f) => [f.item, f.owner, f.statusNote].some((v) => (v || '').toLowerCase().includes(q)))
 }
 
+// Return a comparable pair [tier, sub] where lower comes first.
+// Tier 0 = future weeks (nearest future ranks smaller); tier 1 = current week;
+// tier 2 = past weeks (most recent ranks smaller); tier 3 = unscheduled/orphan.
+function weekRank(weekLabel, today) {
+  const m = mondayFromLabelSmart(weekLabel, today)?.getTime() || 0
+  if (!m) return [3, 0]
+  const cm = mondayOf(today).getTime()
+  if (m > cm) return [0, m - cm]
+  if (m === cm) return [1, 0]
+  return [2, cm - m]
+}
+
 function sortByWeekAndStatus(list, today) {
   return [...list].sort((a, b) => {
     const sa = statusRank(a.status)
     const sb = statusRank(b.status)
     if (sa !== sb) return sa - sb
-    const ma = mondayFromLabelSmart(a.weekLabel, today)?.getTime() || 0
-    const mb = mondayFromLabelSmart(b.weekLabel, today)?.getTime() || 0
-    return mb - ma
+    const [ta, na] = weekRank(a.weekLabel, today)
+    const [tb, nb] = weekRank(b.weekLabel, today)
+    if (ta !== tb) return ta - tb
+    return na - nb
   })
 }
 
