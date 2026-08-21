@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { MonthRow } from './MonthRow'
 import { AddRowInline } from './AddRowInline'
+import { statusRank } from '@/lib/statusOrder'
 
 const COLS = [
   { key: 'item',    label: 'Follow up / Blocker', width: '32%', align: 'left'   },
@@ -123,7 +124,7 @@ export function MonthSection({
                 items.flatMap((f, i) => {
                   const prev = items[i - 1]
                   const rowsForItem = []
-                  if (prev && prev.weekLabel !== f.weekLabel) {
+                  if (prev && statusRank(prev.status) !== statusRank(f.status)) {
                     rowsForItem.push(
                       <tr key={`div-${f.id}`} aria-hidden="true">
                         <td colSpan={COLS.length} className="p-0">

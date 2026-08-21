@@ -16,6 +16,7 @@ import {
   currentMonthKey, currentQuarterKey, mondayOf,
 } from '@/lib/week'
 import { listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp } from '@/lib/api'
+import { statusRank } from '@/lib/statusOrder'
 
 const FIELD_TO_DB = { item: 'item', owner: 'owner', statusNote: 'status_note', kind: 'kind', status: 'status' }
 
@@ -27,10 +28,12 @@ function filterItems(items, filter) {
 
 function sortByWeekAndStatus(list, today) {
   return [...list].sort((a, b) => {
+    const sa = statusRank(a.status)
+    const sb = statusRank(b.status)
+    if (sa !== sb) return sa - sb
     const ma = mondayFromLabelSmart(a.weekLabel, today)?.getTime() || 0
     const mb = mondayFromLabelSmart(b.weekLabel, today)?.getTime() || 0
-    if (ma !== mb) return mb - ma
-    return (a.status === 'blocker' ? 1 : 0) - (b.status === 'blocker' ? 1 : 0)
+    return mb - ma
   })
 }
 
