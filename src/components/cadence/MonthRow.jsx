@@ -4,6 +4,7 @@ import { StatusDropdown } from './StatusDropdown'
 import { MoveMenu } from './MoveMenu'
 import { InlineText } from '@/components/ui/inline-text'
 import { cn } from '@/lib/utils'
+import { weekChipClass, weekRelativeLabel } from '@/lib/weekColor'
 
 function WeekTag({ weekLabel }) {
   if (!weekLabel) {
@@ -11,10 +12,15 @@ function WeekTag({ weekLabel }) {
   }
   const code = weekLabel.match(/^(W\d+)/)?.[1] || ''
   const range = weekLabel.replace(/^W\d+\s*:\s*/, '').trim() || weekLabel
+  const rel = weekRelativeLabel(weekLabel)
+  const tooltip = [code, rel].filter(Boolean).join(' · ') || weekLabel
   return (
     <span
-      title={code || weekLabel}
-      className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums text-foreground/80 bg-white dark:bg-neutral-900 ring-1 ring-inset ring-border whitespace-nowrap"
+      title={tooltip}
+      className={cn(
+        'inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums ring-1 ring-inset whitespace-nowrap',
+        weekChipClass(weekLabel)
+      )}
     >
       {range}
     </span>
