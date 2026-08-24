@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Select } from '@/components/ui/select'
+import { WeekPicker } from './WeekPicker'
 
 export function AddRowInline({ weekOptions, defaultWeek, onAdd }) {
   const [open, setOpen] = useState(false)
@@ -66,18 +66,7 @@ export function AddRowInline({ weekOptions, defaultWeek, onAdd }) {
           className="h-8 w-[120px]"
         />
         {hasPicker && (
-          <Select
-            value={week}
-            onChange={(e) => setWeek(e.target.value)}
-            className="h-8 w-[92px] text-xs"
-            aria-label="Target week"
-            title="Target week"
-          >
-            {weekOptions.map((w) => {
-              const code = w.match(/^(W\d+)/)?.[1] || w.slice(0, 12)
-              return <option key={w} value={w}>{code}</option>
-            })}
-          </Select>
+          <WeekPicker value={week} options={weekOptions} onChange={setWeek} />
         )}
         <Button size="sm" onClick={submit}>Add</Button>
         <Button size="sm" variant="ghost" onClick={cancel}>Cancel</Button>
