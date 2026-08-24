@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, LineChart, CalendarClock, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react'
+import { LayoutDashboard, LineChart, CalendarClock, Radar, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { UserMenu } from './UserMenu'
 import { useTheme } from '@/lib/ThemeProvider'
@@ -8,6 +8,7 @@ const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/metrics', label: 'Operating Metrics', icon: LineChart },
   { to: '/cadence', label: 'Weekly Cadence', icon: CalendarClock },
+  { to: '/signals', label: 'Signals', icon: Radar },
 ]
 
 function NavItem({ to, label, icon: Icon, end, collapsed }) {

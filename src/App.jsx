@@ -5,6 +5,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import Dashboard from '@/pages/Dashboard'
 import OperatingMetricsReview from '@/pages/OperatingMetricsReview'
 import WeeklyCadence from '@/pages/WeeklyCadence'
+import Signals from '@/pages/Signals'
 import Login from '@/pages/Login'
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/metrics" element={<OperatingMetricsReview />} />
                   <Route path="/cadence" element={<WeeklyCadence />} />
+                  <Route path="/signals" element={<Signals />} />
                 </Routes>
               </AppShell>
             </ProtectedRoute>

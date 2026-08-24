@@ -104,6 +104,44 @@ export async function deleteFollowUp(id) {
   if (error) throw error
 }
 
+const toDbSignal = (s) => ({
+  observation: s.observation ?? '',
+  kind: s.kind ?? 'problem',
+  theme: s.theme ?? '',
+  status: s.status ?? 'new',
+  note: s.note ?? '',
+  source: s.source ?? '',
+})
+const fromDbSignal = (r) => ({
+  id: r.id,
+  observation: r.observation ?? '',
+  kind: r.kind ?? 'problem',
+  theme: r.theme ?? '',
+  status: r.status ?? 'new',
+  note: r.note ?? '',
+  source: r.source ?? '',
+})
+
+export async function listSignals() {
+  const { data, error } = await supabase.from(TABLE.signals).select('*').order('created_at', { ascending: false })
+  if (error) throw error
+  return (data || []).map(fromDbSignal)
+}
+export async function insertSignal(row) {
+  const { data, error } = await supabase.from(TABLE.signals).insert(toDbSignal(row)).select().single()
+  if (error) throw error
+  return fromDbSignal(data)
+}
+export async function updateSignal(id, patch) {
+  const { data, error } = await supabase.from(TABLE.signals).update(patch).eq('id', id).select().single()
+  if (error) throw error
+  return fromDbSignal(data)
+}
+export async function deleteSignal(id) {
+  const { error } = await supabase.from(TABLE.signals).delete().eq('id', id)
+  if (error) throw error
+}
+
 const fromDbBlocker = (r) => ({
   id: r.id,
   title: r.title ?? '',

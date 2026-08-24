@@ -17,4 +17,5 @@ export const TABLE = {
   metrics: 'alignment_metrics',
   followUps: 'alignment_follow_ups',
   blockers: 'alignment_blockers',
+  signals: 'alignment_signals',
 }
