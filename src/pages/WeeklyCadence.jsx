@@ -40,13 +40,13 @@ function weekRank(weekLabel, today) {
 
 function sortByWeekAndStatus(list, today) {
   return [...list].sort((a, b) => {
-    const sa = statusRank(a.status)
-    const sb = statusRank(b.status)
-    if (sa !== sb) return sa - sb
     const [ta, na] = weekRank(a.weekLabel, today)
     const [tb, nb] = weekRank(b.weekLabel, today)
     if (ta !== tb) return ta - tb
-    return na - nb
+    if (na !== nb) return na - nb
+    const sa = statusRank(a.status)
+    const sb = statusRank(b.status)
+    return sa - sb
   })
 }
 
