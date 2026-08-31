@@ -1,0 +1,6 @@
+{
+    "code": "42703",
+    "details": null,
+    "hint": null,
+    "message": "column alignment_allowed_emails.created_at does not exist"
+}
