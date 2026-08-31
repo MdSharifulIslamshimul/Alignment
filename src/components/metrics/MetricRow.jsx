@@ -1,6 +1,7 @@
 import { Trash2 } from 'lucide-react'
 import { InlineText } from '@/components/ui/inline-text'
 import { AchievedDropdown } from './AchievedDropdown'
+import { FollowUpDate } from './FollowUpDate'
 
 export function MetricRow({ index, row, onChange, onDelete }) {
   const edit = (key, value) => onChange(row.id, key, value)
@@ -66,6 +67,9 @@ export function MetricRow({ index, row, onChange, onDelete }) {
       </td>
       <td className="align-top py-3 pr-2">
         <AchievedDropdown value={row.achieved} onChange={(v) => edit('achieved', v)} />
+      </td>
+      <td className="align-top py-3 pr-2">
+        <FollowUpDate value={row.followUp} onChange={(v) => edit('followUp', v)} />
       </td>
       <td className="align-top py-3 pr-3 text-right">
         <button
