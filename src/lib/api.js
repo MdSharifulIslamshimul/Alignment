@@ -120,7 +120,56 @@ const fromDbSignal = (r) => ({
   status: r.status ?? 'new',
   note: r.note ?? '',
   source: r.source ?? '',
+  background: r.background ?? '',
+  problem: r.problem ?? '',
+  goal: r.goal ?? '',
+  whyNow: r.why_now ?? '',
+  positioning: r.positioning ?? '',
+  risks: r.risks ?? '',
+  successMetrics: r.success_metrics ?? '',
+  qnaLedger: Array.isArray(r.qna_ledger) ? r.qna_ledger : [],
+  actionList: Array.isArray(r.action_list) ? r.action_list : [],
+  imageUrls: Array.isArray(r.image_urls) ? r.image_urls : [],
 })
+
+const SIGNAL_FIELD_TO_DB = {
+  observation: 'observation', kind: 'kind', theme: 'theme', status: 'status',
+  note: 'note', source: 'source',
+  background: 'background', problem: 'problem', goal: 'goal',
+  whyNow: 'why_now', positioning: 'positioning', risks: 'risks',
+  successMetrics: 'success_metrics',
+  qnaLedger: 'qna_ledger', actionList: 'action_list', imageUrls: 'image_urls',
+}
+
+export async function getSignal(id) {
+  const { data, error } = await supabase.from(TABLE.signals).select('*').eq('id', id).single()
+  if (error) throw error
+  return fromDbSignal(data)
+}
+
+export async function updateSignalFields(id, patch) {
+  const dbPatch = {}
+  for (const [key, val] of Object.entries(patch)) {
+    const dbKey = SIGNAL_FIELD_TO_DB[key]
+    if (dbKey) dbPatch[dbKey] = val
+  }
+  const { data, error } = await supabase.from(TABLE.signals).update(dbPatch).eq('id', id).select().single()
+  if (error) throw error
+  return fromDbSignal(data)
+}
+
+const IMAGES_BUCKET = 'alignment-signal-images'
+export async function uploadSignalImage(signalId, file) {
+  const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
+  const path = `${signalId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+  const { error: upErr } = await supabase.storage.from(IMAGES_BUCKET).upload(path, file, {
+    contentType: file.type || 'application/octet-stream',
+    upsert: false,
+  })
+  if (upErr) throw upErr
+  const { data } = supabase.storage.from(IMAGES_BUCKET).getPublicUrl(path)
+  return data.publicUrl
+}
 
 export async function listSignals() {
   const { data, error } = await supabase.from(TABLE.signals).select('*').order('created_at', { ascending: false })

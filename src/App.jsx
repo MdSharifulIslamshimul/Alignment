@@ -6,6 +6,7 @@ import Dashboard from '@/pages/Dashboard'
 import OperatingMetricsReview from '@/pages/OperatingMetricsReview'
 import WeeklyCadence from '@/pages/WeeklyCadence'
 import Signals from '@/pages/Signals'
+import SignalDetail from '@/pages/SignalDetail'
 import Login from '@/pages/Login'
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
                   <Route path="/metrics" element={<OperatingMetricsReview />} />
                   <Route path="/cadence" element={<WeeklyCadence />} />
                   <Route path="/signals" element={<Signals />} />
+                  <Route path="/signals/:id" element={<SignalDetail />} />
                 </Routes>
               </AppShell>
             </ProtectedRoute>

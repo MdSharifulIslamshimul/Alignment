@@ -1,4 +1,5 @@
-import { Trash2 } from 'lucide-react'
+import { Trash2, ArrowUpRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { TR, TD } from '@/components/ui/table'
 import { InlineText } from '@/components/ui/inline-text'
 import { KindDropdown } from './KindDropdown'
@@ -52,14 +53,24 @@ export function SignalRow({ s, onDelete, onEditField, themeSuggestions }) {
         />
       </TD>
       <TD className="align-top py-3 text-right">
-        <button
-          onClick={() => onDelete(s.id)}
-          className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-destructive hover:bg-accent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label="Delete signal"
-          title="Delete"
-        >
-          <Trash2 size={13} />
-        </button>
+        <div className="flex items-center justify-end gap-0.5">
+          <Link
+            to={`/signals/${s.id}`}
+            className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Open signal details"
+            title="Open details"
+          >
+            <ArrowUpRight size={13} />
+          </Link>
+          <button
+            onClick={() => onDelete(s.id)}
+            className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-destructive hover:bg-accent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Delete signal"
+            title="Delete"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
       </TD>
     </TR>
   )
