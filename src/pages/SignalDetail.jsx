@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Trash2, Plus, Image as ImageIcon, ListChecks, MessageCircleQuestion, Upload, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Trash2, Plus, Image as ImageIcon, ListChecks, MessageCircleQuestion, Upload, ExternalLink, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -57,11 +57,64 @@ function SectionCard({ title, value, placeholder, onCommit }) {
   )
 }
 
+function Lightbox({ urls, index, onClose, onNav }) {
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowLeft') onNav(-1)
+      if (e.key === 'ArrowRight') onNav(1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose, onNav])
+
+  const url = urls[index]
+  if (!url) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/85 backdrop-blur-sm" onClick={onClose}>
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 h-10 w-10 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        aria-label="Close"
+      >
+        <X size={18} />
+      </button>
+      <div className="absolute top-4 left-4 text-white/80 text-xs tabular-nums">{index + 1} / {urls.length}</div>
+      {urls.length > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); onNav(-1) }}
+            className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            aria-label="Previous"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onNav(1) }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            aria-label="Next"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </>
+      )}
+      <img
+        src={url}
+        alt=""
+        className="max-h-full max-w-full object-contain rounded-md shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  )
+}
+
 function ImagesCard({ imageUrls, onChange, signalId }) {
   const inputRef = useRef(null)
   const [url, setUrl] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [lightboxIdx, setLightboxIdx] = useState(null)
 
   const addUrl = () => {
     const u = url.trim()
@@ -86,53 +139,72 @@ function ImagesCard({ imageUrls, onChange, signalId }) {
     }
   }
 
+  const nav = (delta) => {
+    setLightboxIdx((i) => {
+      if (i === null) return null
+      const n = imageUrls.length
+      return ((i + delta) % n + n) % n
+    })
+  }
+
   return (
-    <Card className="overflow-hidden border-border/70">
-      <div className="flex items-center gap-2 px-5 pt-4 pb-2 border-b border-border/50">
-        <ImageIcon size={13} className="text-muted-foreground" />
-        <h3 className="text-[13px] font-semibold tracking-tight uppercase tracking-[0.06em] text-foreground/85">Images</h3>
-        <span className="ml-auto text-[11px] text-muted-foreground tabular-nums">{imageUrls.length}</span>
-      </div>
-      {imageUrls.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 p-3">
-          {imageUrls.map((u) => (
-            <div key={u} className="relative group rounded-lg overflow-hidden border border-border/60 bg-muted/30 aspect-video">
-              <a href={u} target="_blank" rel="noreferrer" className="block h-full">
-                <img src={u} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
-              </a>
-              <button
-                onClick={() => remove(u)}
-                className="absolute top-1 right-1 h-6 w-6 rounded-md bg-foreground/70 text-background opacity-0 group-hover:opacity-100 transition-opacity duration-150 grid place-items-center"
-                aria-label="Remove image"
-                title="Remove"
-              >
-                <Trash2 size={11} />
-              </button>
-            </div>
-          ))}
+    <>
+      <Card className="overflow-hidden border-border/70">
+        <div className="flex items-center gap-2 px-5 pt-4 pb-2 border-b border-border/50">
+          <ImageIcon size={13} className="text-muted-foreground" />
+          <h3 className="text-[13px] font-semibold tracking-[0.06em] uppercase text-foreground/85">Images</h3>
+          <span className="ml-auto text-[11px] text-muted-foreground tabular-nums">{imageUrls.length}</span>
         </div>
-      )}
-      <div className="p-3 border-t border-border/50 space-y-2">
-        <input ref={inputRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
-        <div className="flex items-center gap-2">
+        {imageUrls.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4">
+            {imageUrls.map((u, i) => (
+              <div key={u} className="relative group rounded-lg overflow-hidden border border-border/60 bg-muted/30 aspect-[4/3]">
+                <button
+                  type="button"
+                  onClick={() => setLightboxIdx(i)}
+                  className="block h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Open image"
+                >
+                  <img
+                    src={u}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                    onError={(e) => { e.currentTarget.style.display = 'none' }}
+                  />
+                </button>
+                <button
+                  onClick={() => remove(u)}
+                  className="absolute top-1.5 right-1.5 h-7 w-7 rounded-md bg-foreground/70 text-background opacity-0 group-hover:opacity-100 transition-opacity duration-150 grid place-items-center"
+                  aria-label="Remove image"
+                  title="Remove"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="p-3 border-t border-border/50 flex flex-wrap items-center gap-2 bg-muted/20">
+          <input ref={inputRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
           <Button size="sm" variant="secondary" onClick={() => inputRef.current?.click()} disabled={busy}>
             <Upload size={12} /> {busy ? 'Uploading…' : 'Upload'}
           </Button>
           <span className="text-[11px] text-muted-foreground">or paste a URL</span>
-        </div>
-        <div className="flex items-center gap-2">
           <Input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') addUrl() }}
             placeholder="https://…"
-            className="h-8 text-xs flex-1"
+            className="h-8 text-xs flex-1 min-w-[200px]"
           />
           <Button size="sm" onClick={addUrl} disabled={!url.trim()}>Add</Button>
+          {error && <div className="basis-full text-[11px] text-destructive">{error}</div>}
         </div>
-        {error && <div className="text-[11px] text-destructive">{error}</div>}
-      </div>
-    </Card>
+      </Card>
+      {lightboxIdx !== null && (
+        <Lightbox urls={imageUrls} index={lightboxIdx} onClose={() => setLightboxIdx(null)} onNav={nav} />
+      )}
+    </>
   )
 }
 
@@ -374,25 +446,25 @@ export default function SignalDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          {SECTIONS.map((sec) => (
-            <SectionCard
-              key={sec.key}
-              title={sec.label}
-              placeholder={sec.placeholder}
-              value={signal[sec.key]}
-              onCommit={(v) => patch({ [sec.key]: v })}
-            />
-          ))}
-        </div>
-
-        <div className="lg:col-span-1 space-y-4">
-          <ImagesCard
-            imageUrls={signal.imageUrls}
-            signalId={signal.id}
-            onChange={(next) => patch({ imageUrls: next })}
+      <div className="space-y-4">
+        {SECTIONS.map((sec) => (
+          <SectionCard
+            key={sec.key}
+            title={sec.label}
+            placeholder={sec.placeholder}
+            value={signal[sec.key]}
+            onCommit={(v) => patch({ [sec.key]: v })}
           />
+        ))}
+      </div>
+
+      <div className="mt-8 space-y-4">
+        <ImagesCard
+          imageUrls={signal.imageUrls}
+          signalId={signal.id}
+          onChange={(next) => patch({ imageUrls: next })}
+        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <ActionListCard
             items={signal.actionList}
             onChange={(next) => patch({ actionList: next })}
