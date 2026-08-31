@@ -113,6 +113,19 @@ export function formatQuarterExpanded(quarterKey) {
   return `Q${q} ${y}: ${MONTHS_FULL[start]} · ${MONTHS_FULL[start + 1]} · ${MONTHS_FULL[start + 2]}`
 }
 
+// Format a quarter card's label from just the month-keys the card contains,
+// e.g. formatQuarterFromMonths('2026-Q3', ['2026-08','2026-07']) → 'Q3 2026: August · July'.
+export function formatQuarterFromMonths(quarterKey, monthKeys) {
+  if (!quarterKey) return ''
+  const [y, q] = quarterKey.split('-Q')
+  if (!monthKeys?.length) return `Q${q} ${y}`
+  const names = monthKeys.map((mk) => {
+    const idx = parseInt(mk.split('-')[1], 10) - 1
+    return MONTHS_FULL[idx] || ''
+  })
+  return `Q${q} ${y}: ${names.join(' · ')}`
+}
+
 export function currentMonthKey(today = new Date()) {
   return monthKeyFromDate(today)
 }

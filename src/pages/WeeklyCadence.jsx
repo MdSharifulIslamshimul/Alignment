@@ -12,7 +12,7 @@ import { toast } from '@/components/ui/toaster'
 import {
   weekLabelFromDate, suggestedWeekOptions,
   mondayFromLabelSmart, monthKeyFromDate, quarterKeyFromDate,
-  formatMonthLabel, formatQuarterExpanded,
+  formatMonthLabel, formatQuarterFromMonths,
   currentMonthKey, currentQuarterKey, mondayOf,
 } from '@/lib/week'
 import { listFollowUps, insertFollowUp, updateFollowUp, deleteFollowUp } from '@/lib/api'
@@ -26,8 +26,6 @@ function filterItems(items, filter) {
   return items.filter((f) => [f.item, f.owner, f.statusNote].some((v) => (v || '').toLowerCase().includes(q)))
 }
 
-// Sort within a month: current week first, then upcoming, then most recent past.
-// Ties broken by status: In progress → Stuck → Blocker → Not started → Done.
 function weekRank(weekLabel, today) {
   const m = mondayFromLabelSmart(weekLabel, today)?.getTime() || 0
   if (!m) return [3, 0]
@@ -65,15 +63,15 @@ function buildMonthWeekOptions(itemWeeks, monthKey, today) {
   })
 }
 
-// Group every scheduled follow-up under its quarter. Inside a quarter, put the
-// current month first, then the rest of the quarter's months in reverse-chrono.
-// Quarters themselves: current first, then descending.
-function buildQuarters(items, filter, today, currentLabel) {
+// Layout: current month standalone (top), current quarter's completed months
+// inside a Q# Scope card, then past-quarter scope cards, then unscheduled.
+// Everything reverse-chrono: most recent first inside each card.
+function buildLayout(items, filter, today, currentLabel) {
   const filtered = filterItems(items, filter)
   const monthNow = currentMonthKey(today)
   const quarterNow = currentQuarterKey(today)
 
-  const monthBuckets = new Map() // monthKey → { items, weeks, quarterKey }
+  const monthBuckets = new Map()
   const unscheduled = []
 
   const bucketFor = (mk, qk) => {
@@ -92,42 +90,66 @@ function buildQuarters(items, filter, today, currentLabel) {
     b.weeks.add(f.weekLabel)
   }
 
-  // Always render the current month so the user has a place to add.
   if (!filter && !monthBuckets.has(monthNow)) bucketFor(monthNow, quarterNow)
   if (monthBuckets.has(monthNow) && currentLabel) monthBuckets.get(monthNow).weeks.add(currentLabel)
 
-  const quarterBuckets = new Map() // quarterKey → Map<monthKey, entry>
-  for (const [mKey, b] of monthBuckets.entries()) {
+  const entryFor = (mKey, b) => {
     const monthWeekOptions = buildMonthWeekOptions(b.weeks, mKey, today)
     const defaultAddWeek = monthWeekOptions.includes(currentLabel) ? currentLabel : monthWeekOptions[0]
-    const entry = {
+    return {
       key: mKey,
       label: formatMonthLabel(mKey),
       items: sortByWeekAndStatus(b.items, today),
       monthWeekOptions,
       defaultAddWeek,
-      isCurrent: mKey === monthNow,
     }
+  }
+
+  const quarterBuckets = new Map() // qKey → Map<mKey, entry>
+  for (const [mKey, b] of monthBuckets.entries()) {
+    const entry = entryFor(mKey, b)
     if (!quarterBuckets.has(b.quarterKey)) quarterBuckets.set(b.quarterKey, new Map())
     quarterBuckets.get(b.quarterKey).set(mKey, entry)
   }
 
-  const quarters = [...quarterBuckets.entries()]
+  let liveMonth = null
+  let currentQuarterScope = null
+  const currentQMap = quarterBuckets.get(quarterNow)
+  if (currentQMap) {
+    liveMonth = currentQMap.get(monthNow) || null
+    const completed = [...currentQMap.entries()]
+      .filter(([mKey]) => mKey !== monthNow)
+      .sort(([a], [b]) => (a < b ? 1 : -1))    // reverse-chrono
+      .map(([, entry]) => entry)
+    if (completed.length > 0) {
+      currentQuarterScope = {
+        key: quarterNow,
+        label: formatQuarterFromMonths(quarterNow, completed.map((m) => m.key)),
+        months: completed,
+      }
+    }
+  }
+
+  const pastQuarters = [...quarterBuckets.entries()]
+    .filter(([qKey]) => qKey !== quarterNow)
+    .sort(([a], [b]) => (a < b ? 1 : -1))
     .map(([qKey, mMap]) => {
-      const months = [...mMap.values()].sort((a, b) => {
-        if (a.isCurrent) return -1
-        if (b.isCurrent) return 1
-        return a.key < b.key ? 1 : -1
-      })
-      return { key: qKey, label: formatQuarterExpanded(qKey), months, isCurrent: qKey === quarterNow }
-    })
-    .sort((a, b) => {
-      if (a.isCurrent) return -1
-      if (b.isCurrent) return 1
-      return a.key < b.key ? 1 : -1
+      const months = [...mMap.entries()]
+        .sort(([a], [b]) => (a < b ? 1 : -1))
+        .map(([, entry]) => entry)
+      return {
+        key: qKey,
+        label: formatQuarterFromMonths(qKey, months.map((m) => m.key)),
+        months,
+      }
     })
 
-  return { quarters, unscheduled: sortByWeekAndStatus(unscheduled, today) }
+  return {
+    liveMonth,
+    currentQuarterScope,
+    pastQuarters,
+    unscheduled: sortByWeekAndStatus(unscheduled, today),
+  }
 }
 
 export default function WeeklyCadence() {
@@ -156,8 +178,8 @@ export default function WeeklyCadence() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const tiers = useMemo(
-    () => buildQuarters(followUps, query, today, currentWeek),
+  const layout = useMemo(
+    () => buildLayout(followUps, query, today, currentWeek),
     [followUps, currentWeek, query, today]
   )
 
@@ -214,7 +236,12 @@ export default function WeeklyCadence() {
   }
 
   const hasQuery = query.trim().length > 0
-  const nothingVisible = hasQuery && tiers.quarters.length === 0 && tiers.unscheduled.length === 0
+  const nothingVisible =
+    hasQuery
+    && !layout.liveMonth
+    && !layout.currentQuarterScope
+    && layout.pastQuarters.length === 0
+    && layout.unscheduled.length === 0
 
   return (
     <>
@@ -250,15 +277,49 @@ export default function WeeklyCadence() {
         <Card><EmptyState icon={Search} title="No matches" description={`Nothing matches "${query}".`} /></Card>
       ) : (
         <>
-          {tiers.quarters.map((q) => (
+          {layout.liveMonth && (
+            <MonthSection
+              key={layout.liveMonth.key}
+              label={layout.liveMonth.label}
+              items={layout.liveMonth.items}
+              weekOptions={weekOptions}
+              monthWeekOptions={layout.liveMonth.monthWeekOptions}
+              defaultAddWeek={layout.liveMonth.defaultAddWeek}
+              defaultOpen={true}
+              forceOpen={hasQuery}
+              variant="current"
+              onDelete={removeFollowUp}
+              onEditField={editField}
+              onMoveWeek={moveWeek}
+              onAdd={addFollowUp}
+            />
+          )}
+
+          {layout.currentQuarterScope && (
+            <QuarterlyScopeSection
+              key={layout.currentQuarterScope.key}
+              label={layout.currentQuarterScope.label}
+              months={layout.currentQuarterScope.months}
+              weekOptions={weekOptions}
+              defaultOpen={false}
+              forceOpen={hasQuery}
+              variant="current"
+              onDelete={removeFollowUp}
+              onEditField={editField}
+              onMoveWeek={moveWeek}
+              onAdd={addFollowUp}
+            />
+          )}
+
+          {layout.pastQuarters.map((q) => (
             <QuarterlyScopeSection
               key={q.key}
               label={q.label}
               months={q.months}
               weekOptions={weekOptions}
-              defaultOpen={q.isCurrent}
+              defaultOpen={false}
               forceOpen={hasQuery}
-              variant={q.isCurrent ? 'current' : 'past'}
+              variant="past"
               onDelete={removeFollowUp}
               onEditField={editField}
               onMoveWeek={moveWeek}
@@ -266,11 +327,11 @@ export default function WeeklyCadence() {
             />
           ))}
 
-          {tiers.unscheduled.length > 0 && (
+          {layout.unscheduled.length > 0 && (
             <MonthSection
               key="unscheduled"
               label="Unscheduled"
-              items={tiers.unscheduled}
+              items={layout.unscheduled}
               weekOptions={weekOptions}
               monthWeekOptions={[]}
               defaultAddWeek=""

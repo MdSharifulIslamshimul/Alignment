@@ -81,9 +81,9 @@ export function QuarterlyScopeSection({
               weekOptions={weekOptions}
               monthWeekOptions={m.monthWeekOptions}
               defaultAddWeek={m.defaultAddWeek}
-              defaultOpen={m.isCurrent || forceOpen}
+              defaultOpen={forceOpen}
               forceOpen={forceOpen}
-              variant={m.isCurrent ? 'current' : 'scope'}
+              variant="quarter"
               onDelete={onDelete}
               onEditField={onEditField}
               onMoveWeek={onMoveWeek}
