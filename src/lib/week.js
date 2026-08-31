@@ -1,4 +1,5 @@
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 function isoWeek(d) {
   const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
@@ -102,6 +103,14 @@ export function formatQuarterLabel(quarterKey) {
   const startIdx = qi * 3
   const endIdx = startIdx + 2
   return `Q${q} ${y} · ${MONTHS[startIdx]}–${MONTHS[endIdx]}`
+}
+
+export function formatQuarterExpanded(quarterKey) {
+  if (!quarterKey) return ''
+  const [y, q] = quarterKey.split('-Q')
+  const qi = parseInt(q, 10) - 1
+  const start = qi * 3
+  return `Q${q} ${y}: ${MONTHS_FULL[start]} · ${MONTHS_FULL[start + 1]} · ${MONTHS_FULL[start + 2]}`
 }
 
 export function currentMonthKey(today = new Date()) {
