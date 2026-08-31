@@ -6,11 +6,11 @@ import { ThemeProvider } from './lib/ThemeProvider'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <ThemeProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </ThemeProvider>
-  </React.StrictMode>,
+ <React.StrictMode>
+  <ThemeProvider>
+   <BrowserRouter>
+    <App />
+   </BrowserRouter>
+  </ThemeProvider>
+ </React.StrictMode>,
 )
